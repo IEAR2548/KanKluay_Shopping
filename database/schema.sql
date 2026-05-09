@@ -11,6 +11,7 @@ CREATE TABLE "User" (
     password     VARCHAR(255) NOT NULL,
     phone_number VARCHAR(15),
     role         VARCHAR(20)  NOT NULL DEFAULT 'customer',
+    status       VARCHAR(20)  NOT NULL DEFAULT 'active',
     created_at   TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
@@ -27,6 +28,7 @@ CREATE TABLE Shop (
     shop_id          SERIAL PRIMARY KEY,
     user_id          INTEGER      NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
     shop_name        VARCHAR(100) NOT NULL,
+    status           VARCHAR(20)  NOT NULL DEFAULT 'active',
     shop_description TEXT,
     created_at       TIMESTAMP    NOT NULL DEFAULT NOW()
 );
