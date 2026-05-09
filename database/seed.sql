@@ -19,8 +19,8 @@ INSERT INTO User_Address (user_id, recipient_name, phone_number, address_detail,
 
 -- Shops (status: 'active' | 'inactive' | 'suspended')
 INSERT INTO Shop (user_id, shop_name, shop_description, status) VALUES
-(4, 'ร้านกานต์ช็อป',  'ขายของใช้ในบ้านคุณภาพดี', 'active'),
-(5, 'นิดช็อปปิ้ง',    'แฟชั่นสุดเก๋ราคาถูก',     'inactive');
+(4, 'ร้านกานต์ช็อป', 'ขายของใช้ในบ้านคุณภาพดี', 'active'),
+(5, 'นิดช็อปปิ้ง',   'แฟชั่นสุดเก๋ราคาถูก',     'inactive');
 
 -- Global Categories
 INSERT INTO Global_Category (category_name) VALUES
@@ -55,10 +55,13 @@ INSERT INTO Inventory (product_id, quantity) VALUES
 (6, 0);
 
 -- Orders
+-- order_status:    'pending' | 'completed' | 'cancelled'
+-- shipping_status: 'shipping' | 'delivered' | 'returned'
 INSERT INTO "Order" (user_id, shop_id, address_id, total_amount, net_amount, platform_fee, payment_method, payment_timestamp, shipping_status, order_status) VALUES
 (2, 1, 1, 890.00,  836.60,  53.40,  'credit_card', NOW() - INTERVAL '5 days', 'delivered', 'completed'),
-(2, 2, 1, 1550.00, 1456.90, 93.00,  'promptpay',   NOW() - INTERVAL '3 days', 'shipping',  'confirmed'),
-(3, 1, 3, 3790.00, 3562.60, 227.40, 'credit_card', NOW() - INTERVAL '1 day',  'pending',   'confirmed');
+(2, 2, 1, 1550.00, 1456.90, 93.00,  'promptpay',   NOW() - INTERVAL '3 days', 'shipping',  'pending'),
+(3, 1, 3, 3790.00, 3562.60, 227.40, 'credit_card', NOW() - INTERVAL '1 day',  'shipping',  'pending'),
+(2, 1, 1, 500.00,  470.00,  30.00,  'promptpay',   NOW() - INTERVAL '7 days', 'returned',  'cancelled');
 
 -- Order Items
 INSERT INTO Order_Item (order_id, product_id, quantity, price_at_purchase) VALUES
@@ -66,7 +69,8 @@ INSERT INTO Order_Item (order_id, product_id, quantity, price_at_purchase) VALUE
 (2, 4, 2, 350.00),
 (2, 6, 1, 1200.00),
 (3, 2, 1, 1590.00),
-(3, 3, 1, 2200.00);
+(3, 3, 1, 2200.00),
+(4, 4, 1, 350.00);
 
 -- Shop Payouts
 INSERT INTO Shop_Payout (shop_id, order_id, payout_date, net_amount, status) VALUES
