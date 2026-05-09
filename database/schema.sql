@@ -87,8 +87,10 @@ CREATE TABLE "Order" (
     platform_fee      DECIMAL(10, 2) NOT NULL,
     payment_method    VARCHAR(50),
     payment_timestamp TIMESTAMP,
-    shipping_status   VARCHAR(20)    NOT NULL DEFAULT 'pending',
+    shipping_status   VARCHAR(20)    NOT NULL DEFAULT 'shipping'
+                                   CHECK (shipping_status IN ('shipping', 'delivered', 'returned')),
     order_status      VARCHAR(20)    NOT NULL DEFAULT 'pending'
+                                   CHECK (order_status IN ('pending', 'completed', 'cancelled'))
 );
 
 CREATE TABLE Order_Item (
@@ -98,6 +100,7 @@ CREATE TABLE Order_Item (
     price_at_purchase DECIMAL(10, 2) NOT NULL,
     PRIMARY KEY (order_id, product_id)
 );
+
 CREATE TABLE Shop_Payout (
     payout_id   SERIAL PRIMARY KEY,
     shop_id     INTEGER        NOT NULL REFERENCES Shop(shop_id) ON DELETE RESTRICT,
