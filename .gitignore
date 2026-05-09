@@ -1,0 +1,33 @@
+# ============================================================
+#  KanKluay .gitignore
+# ============================================================
+ 
+# Environment
+.env
+.env.local
+.env.development
+.env.production
+ 
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+ 
+# Next.js
+client/.next/
+client/out/
+client/build/
+ 
+# Docker
+postgres_data/
+ 
+# OS
+.DS_Store
+Thumbs.db
+ 
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
