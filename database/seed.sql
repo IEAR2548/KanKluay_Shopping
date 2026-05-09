@@ -2,23 +2,25 @@
 --  KanKluay Seed Data (for demo)
 -- ============================================================
 
--- Users
-INSERT INTO "User" (firstname, lastname, username, email, password, phone_number, role) VALUES
-('สมชาย', 'ใจดี',    'somchai',  'somchai@email.com',  'hashed_pw_1', '0812345678', 'user'),
-('สมหญิง', 'รักดี',   'somying',  'somying@email.com',  'hashed_pw_2', '0823456789', 'user'),
-('กานต์',  'มีสุข',   'kaan',     'kaan@email.com',     'hashed_pw_3', '0834567890', 'user'),
-('แอดมิน', 'ระบบ',    'admin',    'admin@kankluay.com', 'hashed_pw_5', '0800000000', 'admin');
+-- Users (role: 'user' | 'admin', status: 'active' | 'inactive' | 'suspended')
+INSERT INTO "User" (firstname, lastname, username, email, password, phone_number, role, status) VALUES
+('แอดมิน',  'ระบบ',    'admin',    'admin@kankluay.com', 'hashed_pw_0', '0800000000', 'admin', 'active'),
+('สมชาย',   'ใจดี',    'somchai',  'somchai@email.com',  'hashed_pw_1', '0812345678', 'user',  'active'),
+('สมหญิง',  'รักดี',   'somying',  'somying@email.com',  'hashed_pw_2', '0823456789', 'user',  'active'),
+('กานต์',   'มีสุข',   'kaan',     'kaan@email.com',     'hashed_pw_3', '0834567890', 'user',  'active'),
+('นิด',     'น้อย',    'nid',      'nid@email.com',      'hashed_pw_4', '0845678901', 'user',  'inactive'),
+('แบน',     'ทดสอบ',   'banned01', 'banned@email.com',   'hashed_pw_5', '0856789012', 'user',  'suspended');
 
 -- User Addresses
 INSERT INTO User_Address (user_id, recipient_name, phone_number, address_detail, is_default) VALUES
-(1, 'สมชาย ใจดี',  '0812345678', '123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพ 10110', TRUE),
-(1, 'สมชาย ใจดี',  '0812345678', '456 ถนนลาดพร้าว แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพ 10230', FALSE),
-(2, 'สมหญิง รักดี', '0823456789', '789 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพ 10310', TRUE);
+(2, 'สมชาย ใจดี',   '0812345678', '123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพ 10110',    TRUE),
+(2, 'สมชาย ใจดี',   '0812345678', '456 ถนนลาดพร้าว แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพ 10230',  FALSE),
+(3, 'สมหญิง รักดี', '0823456789', '789 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพ 10310',  TRUE);
 
--- Shops
-INSERT INTO Shop (user_id, shop_name, shop_description) VALUES
-(1, 'ร้านสมชายช็อป',   'ขายของใช้ในบ้านคุณภาพดี'),
-(3, 'กานต์ช็อปปิ้ง',   'แฟชั่นสุดเก๋ราคาถูก');
+-- Shops (status: 'active' | 'inactive' | 'suspended')
+INSERT INTO Shop (user_id, shop_name, shop_description, status) VALUES
+(4, 'ร้านกานต์ช็อป',  'ขายของใช้ในบ้านคุณภาพดี', 'active'),
+(5, 'นิดช็อปปิ้ง',    'แฟชั่นสุดเก๋ราคาถูก',     'inactive');
 
 -- Global Categories
 INSERT INTO Global_Category (category_name) VALUES
@@ -43,20 +45,20 @@ INSERT INTO Product (shop_id, local_cat_id, product_name, description, price) VA
 (2, 3, 'กางเกงขายาว',              'ผ้า Linen เนื้อนุ่ม',                  590.00),
 (2, 4, 'กระเป๋าสะพายข้าง',         'หนัง PU คุณภาพดี',                     1200.00);
 
--- Inventory
+-- Inventory (product 5 = low stock, product 6 = out of stock สำหรับ demo)
 INSERT INTO Inventory (product_id, quantity) VALUES
 (1, 50),
 (2, 30),
 (3, 15),
 (4, 100),
-(5, 80),
-(6, 25);
+(5, 3),
+(6, 0);
 
 -- Orders
 INSERT INTO "Order" (user_id, shop_id, address_id, total_amount, net_amount, platform_fee, payment_method, payment_timestamp, shipping_status, order_status) VALUES
-(1, 1, 1, 890.00,  836.60,  53.40,  'credit_card', NOW() - INTERVAL '5 days', 'delivered', 'completed'),
-(1, 2, 1, 1550.00, 1456.90, 93.00,  'promptpay',   NOW() - INTERVAL '3 days', 'shipping',  'confirmed'),
-(2, 1, 3, 3790.00, 3562.60, 227.40, 'credit_card', NOW() - INTERVAL '1 day',  'pending',   'confirmed');
+(2, 1, 1, 890.00,  836.60,  53.40,  'credit_card', NOW() - INTERVAL '5 days', 'delivered', 'completed'),
+(2, 2, 1, 1550.00, 1456.90, 93.00,  'promptpay',   NOW() - INTERVAL '3 days', 'shipping',  'confirmed'),
+(3, 1, 3, 3790.00, 3562.60, 227.40, 'credit_card', NOW() - INTERVAL '1 day',  'pending',   'confirmed');
 
 -- Order Items
 INSERT INTO Order_Item (order_id, product_id, quantity, price_at_purchase) VALUES
