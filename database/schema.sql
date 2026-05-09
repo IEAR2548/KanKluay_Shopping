@@ -10,8 +10,10 @@ CREATE TABLE "User" (
     email        VARCHAR(100) NOT NULL UNIQUE,
     password     VARCHAR(255) NOT NULL,
     phone_number VARCHAR(15),
-    role         VARCHAR(20)  NOT NULL DEFAULT 'customer',
-    status       VARCHAR(20)  NOT NULL DEFAULT 'active',
+    role         VARCHAR(20)  NOT NULL DEFAULT 'user'
+                              CHECK (role IN ('user', 'admin')),
+    status       VARCHAR(20)  NOT NULL DEFAULT 'active'
+                              CHECK (status IN ('active', 'inactive', 'suspended')),
     created_at   TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
@@ -28,8 +30,9 @@ CREATE TABLE Shop (
     shop_id          SERIAL PRIMARY KEY,
     user_id          INTEGER      NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
     shop_name        VARCHAR(100) NOT NULL,
-    status           VARCHAR(20)  NOT NULL DEFAULT 'active',
     shop_description TEXT,
+    status           VARCHAR(20)  NOT NULL DEFAULT 'active'
+                                  CHECK (status IN ('active', 'inactive', 'suspended')),
     created_at       TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 

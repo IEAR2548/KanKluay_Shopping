@@ -4,10 +4,10 @@
 
 -- Users
 INSERT INTO "User" (firstname, lastname, username, email, password, phone_number, role) VALUES
-('สมชาย', 'ใจดี',    'somchai',  'somchai@email.com',  'hashed_pw_1', '0812345678', 'customer'),
-('สมหญิง', 'รักดี',   'somying',  'somying@email.com',  'hashed_pw_2', '0823456789', 'customer'),
-('กานต์',  'มีสุข',   'kaan',     'kaan@email.com',     'hashed_pw_3', '0834567890', 'seller'),
-('นิด',    'น้อย',    'nid',      'nid@email.com',      'hashed_pw_4', '0845678901', 'seller');
+('สมชาย', 'ใจดี',    'somchai',  'somchai@email.com',  'hashed_pw_1', '0812345678', 'user'),
+('สมหญิง', 'รักดี',   'somying',  'somying@email.com',  'hashed_pw_2', '0823456789', 'user'),
+('กานต์',  'มีสุข',   'kaan',     'kaan@email.com',     'hashed_pw_3', '0834567890', 'user'),
+('แอดมิน', 'ระบบ',    'admin',    'admin@kankluay.com', 'hashed_pw_5', '0800000000', 'admin');
 
 -- User Addresses
 INSERT INTO User_Address (user_id, recipient_name, phone_number, address_detail, is_default) VALUES
@@ -17,8 +17,8 @@ INSERT INTO User_Address (user_id, recipient_name, phone_number, address_detail,
 
 -- Shops
 INSERT INTO Shop (user_id, shop_name, shop_description) VALUES
-(3, 'ร้านกานต์ช็อป',    'ขายของใช้ในบ้านคุณภาพดี'),
-(4, 'นิดช็อปปิ้ง',      'แฟชั่นสุดเก๋ราคาถูก');
+(1, 'ร้านสมชายช็อป',   'ขายของใช้ในบ้านคุณภาพดี'),
+(3, 'กานต์ช็อปปิ้ง',   'แฟชั่นสุดเก๋ราคาถูก');
 
 -- Global Categories
 INSERT INTO Global_Category (category_name) VALUES
