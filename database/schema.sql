@@ -98,7 +98,6 @@ CREATE TABLE Order_Item (
     price_at_purchase DECIMAL(10, 2) NOT NULL,
     PRIMARY KEY (order_id, product_id)
 );
-
 CREATE TABLE Shop_Payout (
     payout_id   SERIAL PRIMARY KEY,
     shop_id     INTEGER        NOT NULL REFERENCES Shop(shop_id) ON DELETE RESTRICT,
