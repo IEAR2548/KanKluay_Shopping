@@ -63,26 +63,30 @@
 //     }
 //   };
 
-//   const combineTotal = items.reduce((sum, i) => sum + i.subtotal, 0);
-//   const totalPayment = combineTotal + SHIPPING_FEE;
+
+//   const combineTotal = items.reduce((sum, i) => sum + Number(i.subtotal), 0);
+//   const totalPayment = Number(combineTotal) + Number(SHIPPING_FEE);
 
 //   const handlePlaceOrder = async () => {
 //     if (!selectedAddress) return alert("กรุณาเลือกที่อยู่จัดส่ง");
 //     setLoading(true);
 //     try {
+//       // ส่งเฉพาะสินค้าที่เลือกมา checkout
 //       const res = await fetch(`${API}/cart/${USER_ID}/checkout`, {
 //         method: "POST",
 //         headers: { "Content-Type": "application/json" },
 //         body: JSON.stringify({
 //           address_id: selectedAddress.address_id,
 //           payment_method: paymentMethod,
+//           // ส่ง product_ids ที่เลือกมาด้วย เพื่อให้ backend ลบเฉพาะรายการนี้
+//           product_ids: items.map((i) => i.product_id),
 //         }),
 //       });
 //       const json = await res.json();
 //       if (!res.ok) throw new Error(json.error);
 //       localStorage.removeItem("checkout_items");
 //       alert(`สั่งซื้อสำเร็จ! Order ID: ${json.data.order_id}`);
-//       router.push("/");
+//       router.push("/cart");
 //     } catch (err: any) {
 //       alert(err.message ?? "เกิดข้อผิดพลาด");
 //     } finally {
@@ -181,14 +185,6 @@
 //           )}
 //         </div>
 
-//         {/* ─── Coupon ─── */}
-//         <div style={styles.couponBar}>
-//           <span style={{ color: "#e53e3e" }}>🎫</span>
-//           <span style={{ marginLeft: 8 }}>โค้ดส่วนลด KanGuay</span>
-//           <span style={{ marginLeft: "auto", color: "#3182ce", cursor: "pointer" }}>
-//             กดใช้โค้ด
-//           </span>
-//         </div>
 
 //         {/* ─── Payment method ─── */}
 //         <div style={styles.card}>
@@ -340,10 +336,13 @@
 //   },
 // };
 
+
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AdminNavbar from "@/components/admin/AdminNavbar";
 
 const API = "http://localhost:5000";
 const USER_ID = 2; // TODO: replace with session user id
@@ -386,27 +385,19 @@ export default function CheckoutPage() {
 
   const fetchAddresses = async () => {
     try {
+      // ดึง address ผ่าน userRoutes: GET /users/:id/addresses
       const res = await fetch(`${API}/users/${USER_ID}/addresses`);
       const json = await res.json();
       const list: Address[] = json.data ?? [];
       setAddresses(list);
       setSelectedAddress(list.find((a) => a.is_default) ?? list[0] ?? null);
-    } catch {
-      // ถ้า endpoint ยังไม่มี ใช้ mock ก่อน
-      const mock: Address = {
-        address_id: 1,
-        recipient_name: "Mr.lear",
-        phone_number: "099-123-456",
-        address_detail: "123 ถนนปารีส แขวงชิคาโก้ เขตเมืองเช็ค จังหวัดกรุงเทพ 10111 ประเทศไทย",
-        is_default: true,
-      };
-      setAddresses([mock]);
-      setSelectedAddress(mock);
+    } catch (err) {
+      console.error("โหลด address ไม่ได้:", err);
     }
   };
 
-  const combineTotal = items.reduce((sum, i) => sum + i.subtotal, 0);
-  const totalPayment = combineTotal + SHIPPING_FEE;
+  const combineTotal = items.reduce((sum, i) => sum + Number(i.subtotal), 0);
+  const totalPayment = Number(combineTotal) + Number(SHIPPING_FEE);
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) return alert("กรุณาเลือกที่อยู่จัดส่ง");
@@ -437,25 +428,9 @@ export default function CheckoutPage() {
 
   return (
     <div style={styles.page}>
-      {/* ─── Top bar ─── */}
-      <div style={styles.topBar}>
-        <span>Seller Centre</span>
-        <div style={styles.topBarRight}>
-          <span>🔔 Notification</span>
-          <div style={styles.avatar}>S</div>
-          <span style={{ fontWeight: 600 }}>Sun2549</span>
-        </div>
-      </div>
 
-      {/* ─── Navbar ─── */}
-      <div style={styles.navbar}>
-        <div style={styles.brand}>
-          <div style={styles.logo}>🍌</div>
-          <span style={styles.brandText}>คันกล้วย<br /><small>Shopping</small></span>
-          <span style={styles.separator}>|</span>
-          <span style={styles.pageTitle}>Place An Order</span>
-        </div>
-      </div>
+      <AdminNavbar />
+      
 
       {/* ─── Progress bar (decorative) ─── */}
       <div style={styles.progressBar}>
