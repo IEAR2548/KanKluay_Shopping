@@ -1,0 +1,295 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import AdminNavbar from "@/components/admin/AdminNavbar";
+
+const API = "http://localhost:5000";
+const USER_ID = 2; // TODO: replace with session user id
+
+interface OrderItem {
+  product_id: number;
+  product_name: string;
+  quantity: number;
+  price_at_purchase: number;
+}
+
+interface Order {
+  order_id: number;
+  shop_id: number;
+  shop_name: string;
+  order_date: string;
+  total_amount: number;
+  order_status: string;
+  shipping_status: string;
+  items?: OrderItem[];
+}
+
+const STATUS_COLOR: Record<string, string> = {
+  completed: "#28a745",
+  pending:   "#f5a623",
+  cancelled: "#dc3545",
+};
+
+const SHIPPING_COLOR: Record<string, string> = {
+  shipping:  "#f5a623",
+  delivered: "#28a745",
+  returned:  "#dc3545",
+};
+
+export default function MyPurchasePage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch(`${API}/orders/user/${USER_ID}`);
+      const json = await res.json();
+      const list: Order[] = json.data?.rows ?? json.data ?? [];
+      setOrders(list);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={styles.page}>
+        <AdminNavbar />
+
+      {/* ─── Main layout ─── */}
+      <div style={styles.layout}>
+        {/* ─── Sidebar ─── */}
+        <div style={styles.sidebar}>
+          <div style={styles.profile}>
+            <div style={styles.profileAvatar}>S</div>
+            <div>
+              <div style={styles.profileName}>Sun2549</div>
+              <div style={styles.profileEdit}>✏️ Edit Personal Information</div>
+            </div>
+          </div>
+
+          <div style={styles.menu}>
+            <div style={styles.menuItem}>
+              <span>👤</span>
+              <span>My Account</span>
+            </div>
+            <div style={{ ...styles.menuItem, ...styles.menuItemActive }}>
+              <span>📋</span>
+              <span>My Purchases</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Content ─── */}
+        <div style={styles.content}>
+          {loading ? (
+            <div style={styles.empty}>กำลังโหลด...</div>
+          ) : orders.length === 0 ? (
+            <div style={styles.empty}>ไม่มีรายการสั่งซื้อ</div>
+          ) : (
+            orders.map((order) => (
+              <OrderCard key={order.order_id} order={order} />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Order Card ──────────────────────────────────────────────
+function OrderCard({ order }: { order: Order }) {
+  const router = useRouter();
+  const [items, setItems] = useState<OrderItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch(`http://localhost:5000/orders/${order.order_id}`)
+      .then((r) => r.json())
+      .then((json) => {
+        setItems(json.data?.items ?? []);
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, [order.order_id]);
+
+  const statusLabel = order.order_status.charAt(0).toUpperCase() + order.order_status.slice(1);
+  const statusColor = STATUS_COLOR[order.order_status] ?? "#888";
+  const shippingColor = SHIPPING_COLOR[order.shipping_status] ?? "#888";
+  const shippingLabel = order.shipping_status.charAt(0).toUpperCase() + order.shipping_status.slice(1);
+
+  return (
+    <div style={styles.orderCard}>
+      {/* shop header */}
+      <div style={styles.orderHeader}>
+        <span style={styles.shopName}>{order.shop_name ?? `Shop #${order.shop_id}`}</span>
+        <button style={styles.chatBtn}>💬 Chat</button>
+        <button style={styles.viewStoreBtn}>🏪 View Store</button>
+        <span style={{ marginLeft: "auto", color: statusColor, fontWeight: 600 }}>
+          ● {statusLabel}
+        </span>
+      </div>
+
+      {/* items */}
+      {!loaded ? (
+        <div style={styles.itemRow}>
+          <div style={{ color: "#aaa", fontSize: 13 }}>กำลังโหลดรายการ...</div>
+        </div>
+      ) : (
+        items.map((item) => (
+          <div key={item.product_id} style={styles.itemRow}>
+            <div style={styles.itemImg}>📦</div>
+            <div style={styles.itemInfo}>
+              <div style={styles.itemName}>
+                {item.product_name} x{item.quantity}
+              </div>
+            </div>
+            <div style={styles.itemPrice}>
+              {Number(item.price_at_purchase).toFixed(2)}
+            </div>
+          </div>
+        ))
+      )}
+
+      <div style={styles.divider} />
+
+      {/* footer */}
+      <div style={styles.orderFooter}>
+        <div style={styles.statusTag}>
+          Status:{" "}
+          <span style={{ color: shippingColor, fontWeight: 600 }}>
+            ● {shippingLabel}
+          </span>
+        </div>
+        <div style={styles.footerActions}>
+          <button style={styles.contactBtn}>💬 Contact Seller</button>
+          <button style={styles.viewOrderBtn} onClick={() => router.push(`/orders/${order.order_id}`)}>🛒 View Order</button>
+          <span style={styles.totalText}>
+            Total: {Number(order.total_amount).toFixed(2)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────
+const styles: Record<string, React.CSSProperties> = {
+  page: { fontFamily: "Sarabun, sans-serif", background: "#f5f5f5", minHeight: "100vh" },
+  topBar: {
+    background: "#f5a623", color: "#000", fontSize: 13,
+    padding: "6px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
+  },
+  topBarRight: { display: "flex", alignItems: "center", gap: 12 },
+  avatar: {
+    width: 28, height: 28, borderRadius: "50%", background: "#fff",
+    display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700,
+  },
+  navbar: {
+    background: "#f5a623", padding: "10px 24px",
+    display: "flex", alignItems: "center", gap: 12,
+  },
+  brand: { display: "flex", alignItems: "center", gap: 8, marginRight: 12 },
+  logo: { fontSize: 36 },
+  brandName: { fontWeight: 800, fontSize: 16, lineHeight: 1.1 },
+  brandSub: { fontSize: 11, color: "#7b4f00" },
+  search: {
+    flex: 1, border: "none", borderRadius: 4,
+    padding: "10px 16px", fontSize: 14, outline: "none",
+  },
+  searchBtn: {
+    background: "#e69500", border: "none", borderRadius: 4,
+    padding: "10px 16px", cursor: "pointer", fontSize: 16,
+  },
+  cartIcon: { position: "relative", fontSize: 24, cursor: "pointer" },
+  cartBadge: {
+    position: "absolute", top: -6, right: -8,
+    background: "#e53e3e", color: "#fff", borderRadius: "50%",
+    fontSize: 10, width: 18, height: 18,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontWeight: 700,
+  },
+  layout: {
+    maxWidth: 1100, margin: "24px auto", padding: "0 16px",
+    display: "flex", gap: 16, alignItems: "flex-start",
+  },
+  sidebar: {
+    width: 200, background: "#fff", borderRadius: 4,
+    padding: "20px 0", flexShrink: 0,
+  },
+  profile: {
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "0 16px 16px", borderBottom: "1px solid #f0f0f0",
+  },
+  profileAvatar: {
+    width: 44, height: 44, borderRadius: "50%",
+    background: "#555", color: "#fff",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: 18, fontWeight: 700, flexShrink: 0,
+  },
+  profileName: { fontWeight: 700, fontSize: 14 },
+  profileEdit: { fontSize: 11, color: "#888", cursor: "pointer", marginTop: 2 },
+  menu: { padding: "12px 0" },
+  menuItem: {
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "10px 20px", fontSize: 14, cursor: "pointer", color: "#333",
+  },
+  menuItemActive: { color: "#f5a623", fontWeight: 600 },
+  content: { flex: 1 },
+  empty: { background: "#fff", padding: 40, textAlign: "center", color: "#888", borderRadius: 4 },
+  orderCard: {
+    background: "#fff", borderRadius: 4,
+    marginBottom: 12, overflow: "hidden",
+  },
+  orderHeader: {
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "14px 20px", borderBottom: "1px solid #f5f5f5",
+  },
+  shopName: { fontWeight: 700, fontSize: 16, marginRight: 4 },
+  chatBtn: {
+    border: "1px solid #ddd", background: "#fff",
+    padding: "5px 12px", borderRadius: 4,
+    cursor: "pointer", fontSize: 13,
+  },
+  viewStoreBtn: {
+    border: "1px solid #ddd", background: "#fff",
+    padding: "5px 12px", borderRadius: 4,
+    cursor: "pointer", fontSize: 13,
+  },
+  itemRow: {
+    display: "flex", alignItems: "center", gap: 12,
+    padding: "16px 20px", borderBottom: "1px solid #fafafa",
+  },
+  itemImg: {
+    width: 60, height: 60, background: "#e8f4fd",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: 28, borderRadius: 4, flexShrink: 0,
+  },
+  itemInfo: { flex: 1 },
+  itemName: { fontSize: 14, fontWeight: 500 },
+  itemPrice: { fontSize: 14, color: "#333", minWidth: 80, textAlign: "right" as const },
+  divider: { height: 1, background: "#f0f0f0" },
+  orderFooter: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "14px 20px",
+  },
+  statusTag: { fontSize: 14 },
+  footerActions: { display: "flex", alignItems: "center", gap: 10 },
+  contactBtn: {
+    border: "1px solid #ddd", background: "#fff",
+    padding: "6px 14px", borderRadius: 20,
+    cursor: "pointer", fontSize: 13,
+  },
+  viewOrderBtn: {
+    border: "1px solid #ddd", background: "#fff",
+    padding: "6px 14px", borderRadius: 20,
+    cursor: "pointer", fontSize: 13,
+  },
+  totalText: { fontWeight: 700, fontSize: 16, marginLeft: 8 },
+};

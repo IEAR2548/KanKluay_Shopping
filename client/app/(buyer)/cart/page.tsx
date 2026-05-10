@@ -138,6 +138,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AdminNavbar from "@/components/admin/AdminNavbar";
 
 // ─── Types ───────────────────────────────────────────────────
 interface CartItem {
@@ -255,7 +256,7 @@ export default function CartPage() {
   // คำนวณ
   const checkedItems = groups.flatMap((g) => g.items.filter((i) => i.checked));
   const totalItems = checkedItems.length;
-  const totalPrice = checkedItems.reduce((sum, i) => sum + i.subtotal, 0);
+  const totalPrice = checkedItems.reduce((sum, i) => sum + Number(i.subtotal), 0);
 
   // ไปหน้า checkout
   const handleOrderProducts = () => {
@@ -274,26 +275,7 @@ export default function CartPage() {
 
   return (
     <div style={styles.page}>
-      {/* ─── Header ─── */}
-      <div style={styles.topBar}>
-        <span>Seller Centre | Open a shop</span>
-        <div style={styles.topBarRight}>
-          <span>Notification</span>
-          <div style={styles.avatar}>S</div>
-          <span style={{ fontWeight: 600 }}>Sun2549</span>
-        </div>
-      </div>
-
-      <div style={styles.navbar}>
-        <div style={styles.brand}>
-          <div style={styles.logo}>🍌</div>
-          <span style={styles.brandText}>คันกล้วย<br /><small>Shopping</small></span>
-          <span style={styles.separator}>|</span>
-          <span style={styles.pageTitle}>Cart</span>
-        </div>
-        <input style={styles.search} placeholder="Search for products and stores" />
-        <button style={styles.searchBtn}>🔍</button>
-      </div>
+      <AdminNavbar />
 
       <div style={styles.container}>
         {/* ─── Column header ─── */}
@@ -371,14 +353,6 @@ export default function CartPage() {
           ))
         )}
 
-        {/* ─── Coupon ─── */}
-        <div style={styles.couponBar}>
-          <span style={{ color: "#e53e3e" }}>🎫</span>
-          <span style={{ marginLeft: 8 }}>โค้ดส่วนลด KanGuay</span>
-          <span style={{ marginLeft: "auto", color: "#3182ce", cursor: "pointer" }}>
-            กดใช้โค้ด
-          </span>
-        </div>
 
         {/* ─── Footer bar ─── */}
         <div style={styles.footerBar}>
