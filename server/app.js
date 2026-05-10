@@ -11,6 +11,9 @@ app.use(express.json());
 const shopRoutes       = require('./routes/shopRoutes');
 const productRoutes    = require('./routes/productRoutes');
 const categoryRoutes   = require('./routes/categoryRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
+
 
 const userRoutes       = require('./routes/userRoutes')
 const orderRoutes       = require('./routes/orderRoutes')
@@ -18,6 +21,8 @@ const orderRoutes       = require('./routes/orderRoutes')
 app.use('/shops',      shopRoutes);
 app.use('/products',   productRoutes);
 app.use('/categories', categoryRoutes);
+app.use('/cart', cartRoutes);
+app.use('/inventory', inventoryRoutes);
 
 app.use('/users',  userRoutes);
 app.use('/orders', orderRoutes);
