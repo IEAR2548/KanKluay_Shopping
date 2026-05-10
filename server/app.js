@@ -15,11 +15,17 @@ const cartRoutes = require('./routes/cartRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 
 
+const userRoutes       = require('./routes/userRoutes')
+const orderRoutes       = require('./routes/orderRoutes')
+
 app.use('/shops',      shopRoutes);
 app.use('/products',   productRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/cart', cartRoutes);
 app.use('/inventory', inventoryRoutes);
+
+app.use('/users',  userRoutes);
+app.use('/orders', orderRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
