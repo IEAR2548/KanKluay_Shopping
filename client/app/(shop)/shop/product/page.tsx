@@ -87,9 +87,7 @@ export default function ProductManagementPage() {
   };
 
   const handleAddNew = () => {
-    setEditProduct(null);
-    setForm({ product_name: "", description: "", price: "", quantity: "" });
-    setShowModal(true);
+    router.push("/shop/product/add");
   };
 
   const handleSave = async () => {
@@ -146,7 +144,7 @@ export default function ProductManagementPage() {
 
   return (
     <div style={styles.page}>
-        <AdminNavbar />
+      <AdminNavbar />
 
       <div style={styles.layout}>
         {/* ─── Sidebar ─── */}
@@ -252,7 +250,7 @@ export default function ProductManagementPage() {
                             </span>
                           </td>
                           <td style={styles.td}>
-                            <button style={styles.actionBtn} onClick={() => handleEdit(p)}>✏️</button>
+                            <button style={styles.actionBtn} onClick={() => router.push(`/shop/product/${p.product_id}`)}>✏️</button>
                             <button style={styles.actionBtn} onClick={() => handleDelete(p.product_id)}>🗑️</button>
                           </td>
                         </tr>
