@@ -1,7 +1,7 @@
-const productService = require('../services/productService');
+const productService = require("../services/productService");
 
 const getAllProducts = async (req, res, next) => {
-  try {
+  try { 
     const products = await productService.getAllProducts();
     res.json(products);
   } catch (err) {
@@ -14,7 +14,7 @@ const getProductById = async (req, res, next) => {
     const { id } = req.params;
     const product = await productService.getProductById(id);
     if (!product) {
-      const error = new Error('Product not found');
+      const error = new Error("Product not found");
       error.status = 404;
       throw error;
     }
@@ -36,10 +36,25 @@ const getProductsByShop = async (req, res, next) => {
 
 const createProduct = async (req, res, next) => {
   try {
-    const { shop_id, local_cat_id, product_name, description, price, quantity } = req.body;
+    const {
+      shop_id,
+      local_cat_id,
+      product_name,
+      description,
+      price,
+      quantity,
+    } = req.body;
 
-    if (!shop_id || !local_cat_id || !product_name || !price || quantity === undefined) {
-      const error = new Error('shop_id, local_cat_id, product_name, price, and quantity are required');
+    if (
+      !shop_id ||
+      !local_cat_id ||
+      !product_name ||
+      !price ||
+      quantity === undefined
+    ) {
+      const error = new Error(
+        "shop_id, local_cat_id, product_name, price, and quantity are required",
+      );
       error.status = 400;
       throw error;
     }
@@ -50,7 +65,7 @@ const createProduct = async (req, res, next) => {
       product_name,
       description,
       price,
-      quantity
+      quantity,
     );
 
     res.status(201).json(product);
@@ -65,14 +80,19 @@ const updateProduct = async (req, res, next) => {
     const { product_name, description, price } = req.body;
 
     if (!product_name || !price) {
-      const error = new Error('product_name and price are required');
+      const error = new Error("product_name and price are required");
       error.status = 400;
       throw error;
     }
 
-    const product = await productService.updateProduct(id, product_name, description, price);
+    const product = await productService.updateProduct(
+      id,
+      product_name,
+      description,
+      price,
+    );
     if (!product) {
-      const error = new Error('Product not found');
+      const error = new Error("Product not found");
       error.status = 404;
       throw error;
     }
@@ -87,11 +107,11 @@ const deleteProduct = async (req, res, next) => {
     const { id } = req.params;
     const product = await productService.deleteProduct(id);
     if (!product) {
-      const error = new Error('Product not found');
+      const error = new Error("Product not found");
       error.status = 404;
       throw error;
     }
-    res.json({ message: 'Product deleted successfully', product });
+    res.json({ message: "Product deleted successfully", product });
   } catch (err) {
     next(err);
   }
@@ -103,5 +123,5 @@ module.exports = {
   getProductsByShop,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
 };
