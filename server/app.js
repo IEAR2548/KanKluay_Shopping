@@ -12,9 +12,15 @@ const shopRoutes       = require('./routes/shopRoutes');
 const productRoutes    = require('./routes/productRoutes');
 const categoryRoutes   = require('./routes/categoryRoutes');
 
+const userRoutes       = require('./routes/userRoutes')
+const orderRoutes       = require('./routes/orderRoutes')
+
 app.use('/shops',      shopRoutes);
 app.use('/products',   productRoutes);
 app.use('/categories', categoryRoutes);
+
+app.use('/users',  userRoutes);
+app.use('/orders', orderRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
