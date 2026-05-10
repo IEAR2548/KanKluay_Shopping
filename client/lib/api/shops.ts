@@ -2,9 +2,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export interface Shop {
   shop_id: number;
-  user_id: string;
+  user_id: number;
   shop_name: string;
   shop_description: string;
+  status: 'active' | 'inactive' | 'suspended';
   created_at?: string;
   updated_at?: string;
 }
