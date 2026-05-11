@@ -7,12 +7,6 @@ import { StatCard } from "@/components/ui/StatCard";
 import { MiniBarChart } from "@/components/ui/MiniBarChart";
 import { ProvinceList } from "@/components/ui/ProvinceList";
 import {
-  UsersDetailsModal,
-  ShopsDetailsModal,
-  TransactionsDetailsModal,
-  InsightModal,
-} from "@/components/ui/DashboardModals";
-import {
   fetchDashboardSummary,
   fetchTransactionsTrend,
   fetchSubMetrics,
@@ -54,8 +48,6 @@ function calcChange(current: string, previous: string): number {
 }
 
 type TrendRange = "lastWeek" | "lastMonth";
-// which details modal is open
-type DetailsModal = "users" | "shops" | "transactions" | null;
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -124,10 +116,6 @@ export default function DashboardPage() {
   const [trendRange, setTrendRange] = useState<TrendRange>("lastWeek");
   const [activeSubMetric, setActiveSubMetric] = useState<string>("total_users");
 
-  // ── Modal state ──────────────────────────────────────────
-  const [detailsModal, setDetailsModal] = useState<DetailsModal>(null);
-  const [insightOpen, setInsightOpen] = useState(false);
-
   const loadAll = useCallback(async (range: TrendRange) => {
     try {
       setLoading(true);
@@ -158,33 +146,40 @@ export default function DashboardPage() {
 
   // ─── Chart data ───────────────────────────────────────────
   const chartData = trend.map((d) => ({
-    label: new Date(d.date).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+    label: new Date(d.date).toLocaleDateString("en-US", { weekday: "short" }),
     value: Number(d.total_orders),
     revenue: Number(d.revenue),
   }));
 
-  // ─── Mini bar chart data ──────────────────────────────────
+  // ─── Mini bar chart data (users per minute) ───────────────
   const miniBarData = (recentUsers?.per_minute ?? []).map((p, i) => ({
     label: `min ${i + 1}`,
     value: Number(p.users_last_30min),
   }));
+  // fallback placeholder bars when no data
   const miniDisplay =
     miniBarData.length > 0
       ? miniBarData
       : Array.from({ length: 20 }, (_, i) => ({ label: `m${i}`, value: Math.random() * 10 }));
 
   // ─── Growth calc ──────────────────────────────────────────
-  const userChange = growth ? calcChange(growth.new_users_30d, growth.prev_users_30d) : 0;
-  const shopChange = growth ? calcChange(growth.new_shops_30d, growth.prev_shops_30d) : 0;
-  const txChange   = growth ? calcChange(growth.new_orders_30d, growth.prev_orders_30d) : 0;
+  const userChange = growth
+    ? calcChange(growth.new_users_30d, growth.prev_users_30d)
+    : 10.4;
+  const shopChange = growth
+    ? calcChange(growth.new_shops_30d, growth.prev_shops_30d)
+    : -10.4;
+  const txChange = growth
+    ? calcChange(growth.new_orders_30d, growth.prev_orders_30d)
+    : 10.4;
 
   // ─── Sub-metrics config ───────────────────────────────────
   const subMetricItems = [
-    { key: "total_users",        label: "Total Users",        value: subMetrics?.total_users        ?? "0" },
-    { key: "total_shops",        label: "Total Shops",        value: subMetrics?.total_shops        ?? "0" },
+    { key: "total_users", label: "Total Users", value: subMetrics?.total_users ?? "0" },
+    { key: "total_shops", label: "Total Shops", value: subMetrics?.total_shops ?? "0" },
     { key: "total_transactions", label: "Total Transactions", value: subMetrics?.total_transactions ?? "0" },
-    { key: "pending_approvals",  label: "Pending Approvals",  value: subMetrics?.pending_approvals  ?? "0" },
-    { key: "total_revenue",      label: "Total Revenue",      value: subMetrics?.total_revenue      ?? "0" },
+    { key: "pending_approvals", label: "Pending Approvals", value: subMetrics?.pending_approvals ?? "0" },
+    { key: "total_revenue", label: "Total Revenue", value: subMetrics?.total_revenue ?? "0" },
   ];
 
   return (
@@ -196,6 +191,7 @@ export default function DashboardPage() {
         fontFamily: "'Noto Sans Thai', 'Segoe UI', sans-serif",
       }}
     >
+      {/* Page title */}
       <h1 style={{ fontWeight: 800, fontSize: 24, marginBottom: 24, color: "#111" }}>
         Dashboard
       </h1>
@@ -208,7 +204,7 @@ export default function DashboardPage() {
             value={loading ? "…" : formatK(summary?.total_users ?? 0)}
             change={userChange}
             previousLabel="(+ 235)"
-            onDetails={() => setDetailsModal("users")}
+            onDetails={() => {}}
           />
         </div>
         <div style={{ flex: 1, minWidth: 220 }}>
@@ -217,7 +213,7 @@ export default function DashboardPage() {
             value={loading ? "…" : formatK(summary?.total_shops ?? 0)}
             change={shopChange}
             previousLabel="(- 235)"
-            onDetails={() => setDetailsModal("shops")}
+            onDetails={() => {}}
           />
         </div>
         <div style={{ flex: 1, minWidth: 220 }}>
@@ -226,12 +222,12 @@ export default function DashboardPage() {
             value={loading ? "…" : formatK(summary?.total_transactions ?? 0)}
             change={txChange}
             previousLabel="(+ 235K)"
-            onDetails={() => setDetailsModal("transactions")}
+            onDetails={() => {}}
           />
         </div>
       </div>
 
-      {/* ── Main content ── */}
+      {/* ── Main content: Chart + Right panel ── */}
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
 
         {/* Left: Trend chart */}
@@ -245,6 +241,7 @@ export default function DashboardPage() {
             minWidth: 0,
           }}
         >
+          {/* Chart header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
             <h2 style={{ fontWeight: 800, fontSize: 20, margin: 0 }}>Transactions Trend</h2>
             <div style={{ display: "flex", gap: 4 }}>
@@ -306,12 +303,8 @@ export default function DashboardPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#aaa" }} axisLine={false} tickLine={false} />
-                <YAxis
-                  tick={{ fontSize: 12, fill: "#aaa" }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)}
-                />
+                <YAxis tick={{ fontSize: 12, fill: "#aaa" }} axisLine={false} tickLine={false}
+                  tickFormatter={(v) => v >= 1000 ? `${v / 1000}k` : v} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area
                   type="monotone"
@@ -329,6 +322,7 @@ export default function DashboardPage() {
 
         {/* Right panel */}
         <div style={{ width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 20 }}>
+
           {/* Users in last 30 min */}
           <div
             style={{
@@ -351,19 +345,13 @@ export default function DashboardPage() {
             <MiniBarChart data={miniDisplay} height={60} />
           </div>
 
-          {/* Top Shops */}
+          {/* Top Shops / Sales by Provinces */}
           <ProvinceList
             shops={topShops}
-            onViewInsight={() => setInsightOpen(true)}
+            onViewInsight={() => console.log("view insight")}
           />
         </div>
       </div>
-
-      {/* ── Modals ── */}
-      {detailsModal === "users"        && <UsersDetailsModal        onClose={() => setDetailsModal(null)} />}
-      {detailsModal === "shops"        && <ShopsDetailsModal        onClose={() => setDetailsModal(null)} />}
-      {detailsModal === "transactions" && <TransactionsDetailsModal onClose={() => setDetailsModal(null)} />}
-      {insightOpen                     && <InsightModal topShops={topShops} onClose={() => setInsightOpen(false)} />}
 
       {/* Loading overlay */}
       {loading && (

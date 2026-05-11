@@ -102,11 +102,8 @@ export const fetchSummary = (params?: { startDate?: string; endDate?: string }) 
   apiFetch<SummaryData>("/reports/summary", params as Record<string, string>);
 
 export const fetchDailyRevenue = (params: { startDate: string; endDate: string }) =>
-  apiFetch<DailyRevenue[]>("/reports/revenue/daily", {
-    startDate: params.startDate,
-    endDate: params.endDate,
-  });
-  
+  apiFetch<DailyRevenue[]>("/reports/revenue/daily", params);
+
 export const fetchMonthlyRevenue = (params?: { year?: string }) =>
   apiFetch<MonthlyRevenue[]>("/reports/revenue/monthly", params as Record<string, string>);
 
