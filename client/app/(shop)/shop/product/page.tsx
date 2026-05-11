@@ -55,6 +55,10 @@ export default function ProductManagementPage() {
   });
 
   const [categories, setCategories] = useState<any[]>([]);
+  const [globalCategories, setGlobalCategories] = useState<any[]>([]);
+  const [showAddCat, setShowAddCat] = useState(false);
+  const [newCatForm, setNewCatForm] = useState({ category_name: "", global_cat_id: "" });
+  const [savingCat, setSavingCat] = useState(false);
 
   useEffect(() => {
     const fetchShopAndCats = async () => {
@@ -82,11 +86,15 @@ export default function ProductManagementPage() {
         setShopId(targetShopId);
 
         if (targetShopId) {
-          // Fetch categories for this shop
+          // Fetch local categories for this shop
           const catRes = await fetch(`${API}/categories/local/shop/${targetShopId}`);
           const catJson = await catRes.json();
           setCategories(Array.isArray(catJson) ? catJson : (catJson.data || []));
         }
+        // Fetch global categories for the "add category" form
+        const gRes = await fetch(`${API}/categories/global`);
+        const gJson = await gRes.json();
+        setGlobalCategories(Array.isArray(gJson) ? gJson : (gJson.data || []));
       } catch (err) {
         console.error("Fetch shop/cats error:", err);
       }
@@ -154,6 +162,12 @@ export default function ProductManagementPage() {
     router.push("/shop/product/add");
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    setShowAddCat(false);
+    setNewCatForm({ category_name: "", global_cat_id: "" });
+  };
+
   const handleSave = async () => {
     if (!shopId) return;
     if (!form.product_name || !form.price) return alert("กรุณากรอกชื่อและราคา");
@@ -176,12 +190,13 @@ export default function ProductManagementPage() {
         });
       }
     } else {
+      if (!form.local_cat_id) return alert("กรุณาเลือก Category ก่อน หรือเพิ่ม Category ใหม่");
       await fetch(`${API}/products`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shop_id: shopId,
-          local_cat_id: parseInt(form.local_cat_id) || (categories.length > 0 ? categories[0].local_cat_id : 1), 
+          local_cat_id: parseInt(form.local_cat_id),
           product_name: form.product_name,
           description: form.description,
           price: parseFloat(form.price),
@@ -189,7 +204,6 @@ export default function ProductManagementPage() {
         }),
       });
     }
-    setShowModal(false);
     fetchProducts();
   };
 
@@ -407,9 +421,77 @@ export default function ProductManagementPage() {
               ))}
             </select>
 
+            {/* Inline add-category */}
+            <button
+              type="button"
+              style={{ ...styles.addCatToggle, marginTop: 4 }}
+              onClick={() => { setShowAddCat(v => !v); setNewCatForm({ category_name: "", global_cat_id: "" }); }}
+            >
+              {showAddCat ? "▲ Cancel" : "+ Add New Category"}
+            </button>
+
+            {showAddCat && (
+              <div style={styles.addCatBox}>
+                <label style={styles.label}>Category Name</label>
+                <input
+                  style={styles.input}
+                  placeholder="e.g. Fruits"
+                  value={newCatForm.category_name}
+                  onChange={(e) => setNewCatForm(f => ({ ...f, category_name: e.target.value }))}
+                />
+                <label style={{ ...styles.label, marginTop: 6 }}>Global Type</label>
+                <select
+                  style={styles.input}
+                  value={newCatForm.global_cat_id}
+                  onChange={(e) => setNewCatForm(f => ({ ...f, global_cat_id: e.target.value }))}
+                >
+                  <option value="">-- Select Global Category --</option>
+                  {globalCategories.map((g: any) => (
+                    <option key={g.global_cat_id} value={g.global_cat_id}>
+                      {g.category_name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={savingCat}
+                  style={{ ...styles.saveBtn, marginTop: 8, opacity: savingCat ? 0.6 : 1 }}
+                  onClick={async () => {
+                    if (!newCatForm.category_name.trim()) return alert("กรุณากรอกชื่อ Category");
+                    if (!newCatForm.global_cat_id) return alert("กรุณาเลือก Global Category");
+                    if (!shopId) return;
+                    setSavingCat(true);
+                    try {
+                      const res = await fetch(`${API}/categories/local`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          shop_id: shopId,
+                          global_cat_id: parseInt(newCatForm.global_cat_id),
+                          category_name: newCatForm.category_name.trim(),
+                        }),
+                      });
+                      if (!res.ok) throw new Error(await res.text());
+                      const created = await res.json();
+                      setCategories(prev => [...prev, created]);
+                      setForm(f => ({ ...f, local_cat_id: String(created.local_cat_id) }));
+                      setShowAddCat(false);
+                    } catch (err) {
+                      console.error(err);
+                      alert("ไม่สามารถสร้าง Category ได้");
+                    } finally {
+                      setSavingCat(false);
+                    }
+                  }}
+                >
+                  {savingCat ? "กำลังบันทึก..." : "บันทึก Category"}
+                </button>
+              </div>
+            )}
+
             <div style={styles.modalActions}>
-              <button style={styles.cancelBtn} onClick={() => setShowModal(false)}>ยกเลิก</button>
-              <button style={styles.saveBtn} onClick={handleSave}>บันทึก</button>
+              <button style={styles.cancelBtn} onClick={closeModal}>ยกเลิก</button>
+              <button style={styles.saveBtn} onClick={async () => { await handleSave(); closeModal(); }}>บันทึก</button>
             </div>
           </div>
         </div>
@@ -539,5 +621,15 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#f5a623", border: "none",
     padding: "8px 20px", borderRadius: 4,
     fontWeight: 700, cursor: "pointer",
+  },
+  addCatToggle: {
+    background: "none", border: "1px dashed #f5a623",
+    color: "#c47d00", borderRadius: 4, padding: "4px 12px",
+    fontSize: 12, fontWeight: 600, cursor: "pointer", width: "100%",
+  },
+  addCatBox: {
+    background: "#fffbf0", border: "1px solid #f5e0a0",
+    borderRadius: 4, padding: "12px", display: "flex",
+    flexDirection: "column" as const, gap: 4,
   },
 };
