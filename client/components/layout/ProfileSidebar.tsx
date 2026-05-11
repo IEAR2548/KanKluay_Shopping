@@ -2,16 +2,38 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 
 type Props = {
   username: string;
   imageUrl?: string | null;
 };
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export default function ProfileSidebar({ username, imageUrl }: Props) {
   const pathname = usePathname();
+  const { user } = useCurrentUser();
+  const [hasShop, setHasShop] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetch(`${API}/shops/user/${user.user_id}`)
+        .then(res => res.json())
+        .then(data => {
+          const list = Array.isArray(data) ? data : (data.data || []);
+          setHasShop(list.length > 0);
+        })
+        .catch(err => console.error(err));
+    }
+  }, [user]);
 
   const initials = username?.slice(0, 2).toUpperCase() || 'U';
+
+  const userImage = imageUrl
+    ? (imageUrl.startsWith('http') || imageUrl.startsWith('data:') ? imageUrl : `${API}${imageUrl}`)
+    : null;
 
   const NAV = [
     {
@@ -36,7 +58,7 @@ export default function ProfileSidebar({ username, imageUrl }: Props) {
         </svg>
       ),
       children: [
-        { label: 'My Purchases', href: '/profile/purchases' },
+        { label: 'My Purchases', href: '/my-purchases' },
       ],
     },
   ];
@@ -46,8 +68,8 @@ export default function ProfileSidebar({ username, imageUrl }: Props) {
       {/* User info */}
       <div className="flex items-center gap-3 mb-5">
         <div className="w-12 h-12 rounded-full overflow-hidden bg-teal-400 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
-          {imageUrl ? (
-            <img src={imageUrl} alt={username} className="w-full h-full object-cover" />
+          {userImage ? (
+            <img src={userImage} alt={username} className="w-full h-full object-cover" />
           ) : (
             <span className="text-white font-bold text-sm">{initials}</span>
           )}
@@ -65,7 +87,7 @@ export default function ProfileSidebar({ username, imageUrl }: Props) {
       </div>
 
       {/* Nav */}
-      <nav className="space-y-1">
+      <nav className="space-y-1 mb-6">
         {NAV.map(group => (
           <div key={group.section}>
             {/* Section header */}
@@ -111,6 +133,21 @@ export default function ProfileSidebar({ username, imageUrl }: Props) {
           </div>
         ))}
       </nav>
+
+      {/* Shop Register Button */}
+      {!hasShop && (
+        <div className="pt-4 border-t border-gray-100">
+          <Link
+            href="/shop-register"
+            className="flex items-center justify-center gap-2 w-full py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Shop Register
+          </Link>
+        </div>
+      )}
     </aside>
   );
 }

@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AdminNavbar from "@/components/admin/AdminNavbar";
+import UserNavbar from "@/components/layout/UserNavbar";
+import ProfileSidebar from "@/components/layout/ProfileSidebar";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
-const API = "http://localhost:5000";
-const USER_ID = 2; // TODO: replace with session user id
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 interface OrderItem {
   product_id: number;
   product_name: string;
   quantity: number;
   price_at_purchase: number;
+  image_url?: string | null;
 }
 
 interface Order {
@@ -40,14 +42,19 @@ const SHIPPING_COLOR: Record<string, string> = {
 export default function MyPurchasePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, loading: userLoading } = useCurrentUser();
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (!userLoading && !user) {
+      setLoading(false);
+    }
+    if (user) fetchOrders();
+  }, [user, userLoading]);
 
   const fetchOrders = async () => {
+    if (!user?.user_id) return;
     try {
-      const res = await fetch(`${API}/orders/user/${USER_ID}`);
+      const res = await fetch(`${API}/orders/user/${user.user_id}`);
       const json = await res.json();
       const list: Order[] = json.data?.rows ?? json.data ?? [];
       setOrders(list);
@@ -60,31 +67,15 @@ export default function MyPurchasePage() {
 
   return (
     <div style={styles.page}>
-        <AdminNavbar />
+      <UserNavbar />
 
       {/* ─── Main layout ─── */}
       <div style={styles.layout}>
         {/* ─── Sidebar ─── */}
-        <div style={styles.sidebar}>
-          <div style={styles.profile}>
-            <div style={styles.profileAvatar}>S</div>
-            <div>
-              <div style={styles.profileName}>Sun2549</div>
-              <div style={styles.profileEdit}>✏️ Edit Personal Information</div>
-            </div>
-          </div>
-
-          <div style={styles.menu}>
-            <div style={styles.menuItem}>
-              <span>👤</span>
-              <span>My Account</span>
-            </div>
-            <div style={{ ...styles.menuItem, ...styles.menuItemActive }}>
-              <span>📋</span>
-              <span>My Purchases</span>
-            </div>
-          </div>
-        </div>
+        <ProfileSidebar 
+          username={user?.username || user?.firstname || 'User'} 
+          imageUrl={user?.image_url} 
+        />
 
         {/* ─── Content ─── */}
         <div style={styles.content}>
@@ -110,7 +101,7 @@ function OrderCard({ order }: { order: Order }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/orders/${order.order_id}`)
+    fetch(`${API}/orders/${order.order_id}`) // ใช้ตัวแปร API ที่ประกาศไว้ด้านบน
       .then((r) => r.json())
       .then((json) => {
         setItems(json.data?.items ?? []);
@@ -119,14 +110,16 @@ function OrderCard({ order }: { order: Order }) {
       .catch(() => setLoaded(true));
   }, [order.order_id]);
 
-  const statusLabel = order.order_status.charAt(0).toUpperCase() + order.order_status.slice(1);
-  const statusColor = STATUS_COLOR[order.order_status] ?? "#888";
-  const shippingColor = SHIPPING_COLOR[order.shipping_status] ?? "#888";
-  const shippingLabel = order.shipping_status.charAt(0).toUpperCase() + order.shipping_status.slice(1);
+  const statusStr = order.order_status || "pending";
+  const statusLabel = statusStr.charAt(0).toUpperCase() + statusStr.slice(1);
+  const statusColor = STATUS_COLOR[statusStr] ?? "#888";
+  
+  const shipStr = order.shipping_status || "shipping";
+  const shippingColor = SHIPPING_COLOR[shipStr] ?? "#888";
+  const shippingLabel = shipStr.charAt(0).toUpperCase() + shipStr.slice(1);
 
   return (
     <div style={styles.orderCard}>
-      {/* shop header */}
       <div style={styles.orderHeader}>
         <span style={styles.shopName}>{order.shop_name ?? `Shop #${order.shop_id}`}</span>
         <button style={styles.chatBtn}>💬 Chat</button>
@@ -136,7 +129,6 @@ function OrderCard({ order }: { order: Order }) {
         </span>
       </div>
 
-      {/* items */}
       {!loaded ? (
         <div style={styles.itemRow}>
           <div style={{ color: "#aaa", fontSize: 13 }}>กำลังโหลดรายการ...</div>
@@ -144,14 +136,27 @@ function OrderCard({ order }: { order: Order }) {
       ) : (
         items.map((item) => (
           <div key={item.product_id} style={styles.itemRow}>
-            <div style={styles.itemImg}>📦</div>
+            {/* แก้ไขตรงนี้: ส่วนแสดงรูปภาพสินค้า */}
+            <div style={styles.itemImg}>
+              {item.image_url ? (
+                <img
+                  src={item.image_url.startsWith('http') || item.image_url.startsWith('data:') ? item.image_url : `${API}${item.image_url}`}
+                  alt={item.product_name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }}
+                />
+              ) : (
+                <span>📦</span>
+              )}
+            </div>
+            
             <div style={styles.itemInfo}>
               <div style={styles.itemName}>
-                {item.product_name} x{item.quantity}
+                {item.product_name}
               </div>
+              <div style={{ fontSize: 12, color: "#888" }}>x{item.quantity}</div>
             </div>
             <div style={styles.itemPrice}>
-              {Number(item.price_at_purchase).toFixed(2)}
+              ฿{Number(item.price_at_purchase).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
           </div>
         ))
@@ -159,10 +164,9 @@ function OrderCard({ order }: { order: Order }) {
 
       <div style={styles.divider} />
 
-      {/* footer */}
       <div style={styles.orderFooter}>
         <div style={styles.statusTag}>
-          Status:{" "}
+          Shipping Status:{" "}
           <span style={{ color: shippingColor, fontWeight: 600 }}>
             ● {shippingLabel}
           </span>
@@ -171,7 +175,7 @@ function OrderCard({ order }: { order: Order }) {
           <button style={styles.contactBtn}>💬 Contact Seller</button>
           <button style={styles.viewOrderBtn} onClick={() => router.push(`/orders/${order.order_id}`)}>🛒 View Order</button>
           <span style={styles.totalText}>
-            Total: {Number(order.total_amount).toFixed(2)}
+            Total: ฿{Number(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </span>
         </div>
       </div>

@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 
-const API = "http://localhost:5000";
-const SHOP_ID = 1; // TODO: replace with session shop id
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import ShopSidebar from "@/components/layout/ShopSidebar";
+
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const PAGE_SIZE = 10;
 
 interface Product {
@@ -16,39 +18,99 @@ interface Product {
   category_name: string;
   shop_name: string;
   quantity: number;
+  image_url: string | null;
 }
 
-function getStockStatus(qty: number): { label: string; color: string; bg: string } {
-  if (qty === 0)  return { label: "Out of Stock", color: "#dc3545", bg: "#fdecea" };
-  if (qty <= 5)   return { label: "Low Stock",    color: "#b8860b", bg: "#fff8e1" };
-  return            { label: "In Stock",           color: "#28a745", bg: "#eafaf1" };
+function getStockStatus(qty: number): {
+  label: string;
+  color: string;
+  bg: string;
+} {
+  if (qty === 0)
+    return { label: "Out of Stock", color: "#dc3545", bg: "#fdecea" };
+  if (qty <= 5)
+    return { label: "Low Stock", color: "#b8860b", bg: "#fff8e1" };
+  return { label: "In Stock", color: "#28a745", bg: "#eafaf1" };
 }
 
 export default function ProductManagementPage() {
   const router = useRouter();
-  const [products, setProducts]     = useState<Product[]>([]);
-  const [filtered, setFiltered]     = useState<Product[]>([]);
-  const [search, setSearch]         = useState("");
-  const [statusFilter, setStatus]   = useState("all");
-  const [page, setPage]             = useState(1);
-  const [selected, setSelected]     = useState<number[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [showModal, setShowModal]   = useState(false);
+  const { user, loading: userLoading } = useCurrentUser();
+  const [shopId, setShopId] = useState<number | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filtered, setFiltered] = useState<Product[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [form, setForm]             = useState({ product_name: "", description: "", price: "", quantity: "" });
+  const [form, setForm] = useState({
+    product_name: "",
+    description: "",
+    price: "",
+    quantity: "",
+    local_cat_id: "",
+  });
 
-  useEffect(() => { fetchProducts(); }, []);
+  const [categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchShopAndCats = async () => {
+      if (!user?.user_id) return;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlShopId = params.get('shopId');
+        
+        let targetShopId: number | null = null;
+        const res = await fetch(`${API}/shops/user/${user.user_id}`);
+        const shops = await res.json();
+        const shopList = Array.isArray(shops) ? shops : (shops.data || []);
+
+        if (urlShopId) {
+          const exists = shopList.find((s: any) => s.shop_id === Number(urlShopId));
+          if (exists) {
+            targetShopId = exists.shop_id;
+          }
+        }
+
+        if (!targetShopId && shopList.length > 0) {
+          targetShopId = shopList[0].shop_id;
+        }
+
+        setShopId(targetShopId);
+
+        if (targetShopId) {
+          // Fetch categories for this shop
+          const catRes = await fetch(`${API}/categories/local/shop/${targetShopId}`);
+          const catJson = await catRes.json();
+          setCategories(Array.isArray(catJson) ? catJson : (catJson.data || []));
+        }
+      } catch (err) {
+        console.error("Fetch shop/cats error:", err);
+      }
+    };
+    if (user) fetchShopAndCats();
+  }, [user]);
+
+  useEffect(() => {
+    if (shopId) fetchProducts();
+    else if (!userLoading && !user) setLoading(false);
+  }, [shopId, user, userLoading]);
 
   useEffect(() => {
     let list = [...products];
     if (search) {
       list = list.filter((p) =>
-        p.product_name.toLowerCase().includes(search.toLowerCase())
+        p.product_name.toLowerCase().includes(search.toLowerCase()),
       );
     }
     if (statusFilter !== "all") {
       list = list.filter((p) => {
-        const s = getStockStatus(p.quantity).label.toLowerCase().replace(" ", "_");
+        const s = getStockStatus(p.quantity)
+          .label.toLowerCase()
+          .replace(" ", "_");
         return s === statusFilter;
       });
     }
@@ -57,9 +119,10 @@ export default function ProductManagementPage() {
   }, [search, statusFilter, products]);
 
   const fetchProducts = async () => {
+    if (!shopId) return;
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/products/shop/${SHOP_ID}`);
+      const res = await fetch(`${API}/products/shop/${shopId}`);
       const json = await res.json();
       setProducts(json.data ?? json);
     } catch (err) {
@@ -79,9 +142,10 @@ export default function ProductManagementPage() {
     setEditProduct(p);
     setForm({
       product_name: p.product_name,
-      description:  p.description,
-      price:        String(p.price),
-      quantity:     String(p.quantity),
+      description: p.description,
+      price: String(p.price),
+      quantity: String(p.quantity),
+      local_cat_id: String(p.local_cat_id || ""),
     });
     setShowModal(true);
   };
@@ -91,6 +155,7 @@ export default function ProductManagementPage() {
   };
 
   const handleSave = async () => {
+    if (!shopId) return;
     if (!form.product_name || !form.price) return alert("กรุณากรอกชื่อและราคา");
     if (editProduct) {
       await fetch(`${API}/products/${editProduct.product_id}`, {
@@ -98,8 +163,8 @@ export default function ProductManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           product_name: form.product_name,
-          description:  form.description,
-          price:        parseFloat(form.price),
+          description: form.description,
+          price: parseFloat(form.price),
         }),
       });
       // อัปเดต stock ถ้าเปลี่ยน quantity
@@ -115,12 +180,12 @@ export default function ProductManagementPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          shop_id:      SHOP_ID,
-          local_cat_id: 1, // TODO: ให้ user เลือก category
+          shop_id: shopId,
+          local_cat_id: parseInt(form.local_cat_id) || (categories.length > 0 ? categories[0].local_cat_id : 1), 
           product_name: form.product_name,
-          description:  form.description,
-          price:        parseFloat(form.price),
-          quantity:     parseInt(form.quantity) || 0,
+          description: form.description,
+          price: parseFloat(form.price),
+          quantity: parseInt(form.quantity) || 0,
         }),
       });
     }
@@ -148,11 +213,7 @@ export default function ProductManagementPage() {
 
       <div style={styles.layout}>
         {/* ─── Sidebar ─── */}
-        <div style={styles.sidebar}>
-          <div style={styles.sidebarItem}>📊 Dashboard</div>
-          <div style={{ ...styles.sidebarItem, ...styles.sidebarActive }}>📦 Products</div>
-          <div style={styles.sidebarItem}>🧾 Orders</div>
-        </div>
+        <ShopSidebar />
 
         {/* ─── Content ─── */}
         <div style={styles.content}>
@@ -228,7 +289,17 @@ export default function ProductManagementPage() {
                           </td>
                           <td style={styles.td}>
                             <div style={styles.productCell}>
-                              <div style={styles.productThumb}>📦</div>
+                              <div style={styles.productThumb}>
+                                  {p.image_url ? (
+                                    <img
+                                      src={`${API}${p.image_url}`}
+                                      alt={p.product_name}
+                                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }}
+                                    />
+                                  ) : (
+                                    <span>📦</span>
+                                  )}
+                              </div>
                               <div>
                                 <div style={styles.productName}>{p.product_name}</div>
                                 <div style={styles.productCat}>{p.category_name}</div>
@@ -316,10 +387,25 @@ export default function ProductManagementPage() {
             <label style={styles.label}>จำนวนสต็อก</label>
             <input
               style={styles.input}
+              placeholder="Quantity"
               type="number"
               value={form.quantity}
               onChange={(e) => setForm({ ...form, quantity: e.target.value })}
             />
+
+            <label style={styles.label}>Category</label>
+            <select
+              style={styles.input}
+              value={form.local_cat_id}
+              onChange={(e) => setForm({ ...form, local_cat_id: e.target.value })}
+            >
+              <option value="">-- Select Category --</option>
+              {categories.map((c: any) => (
+                <option key={c.local_cat_id} value={c.local_cat_id}>
+                  {c.category_name}
+                </option>
+              ))}
+            </select>
 
             <div style={styles.modalActions}>
               <button style={styles.cancelBtn} onClick={() => setShowModal(false)}>ยกเลิก</button>

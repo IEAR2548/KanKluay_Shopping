@@ -454,3 +454,25 @@ INSERT INTO Shop_Payout (shop_id, order_id, payout_date, net_amount, status) VAL
 (7, 60, '2026-12-30 10:00:00', 470.00,  'pending'),
 (1, 61, '2026-12-30 10:00:00', 940.00,  'pending'),
 (2, 62, '2026-12-30 10:00:00', 470.00,  'pending');
+
+INSERT INTO "User" (firstname, lastname, username, email, password, phone_number, image_url, role, status) 
+VALUES (
+  'Handsome', 
+  'Iear', 
+  'handsomeiear', 
+  'hansomiear@email.com', 
+  'iearhandsome', -- หมายเหตุ: ในระบบจริงควรเป็น Hashed Password
+  '0899999999', 
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=handsome', 
+  'admin', 
+  'active'
+);
+
+INSERT INTO Shop (user_id, shop_name, shop_description, logo_url, status) 
+VALUES (
+  (SELECT user_id FROM "User" WHERE username = 'handsomeiear'), -- ID ที่ได้จากตาราง User ด้านบน
+  'Handsome Iear Shop', 
+  'ร้านค้าสุดหล่อของ Iear จัดเต็มทุกโปรโมชั่น', 
+  null, 
+  'active'
+);

@@ -5,6 +5,7 @@ const {
   loginController,
   logoutController,
   getMeController,
+  checkUsernameController,
 } = require("../controllers/authController");
 const { authenticate } = require("../middleware/authMiddleware");
 
@@ -12,6 +13,7 @@ const { authenticate } = require("../middleware/authMiddleware");
 router.post("/register", registerController);
 router.post("/login", loginController);
 router.post("/logout", logoutController);
+router.get("/check-username/:username", checkUsernameController);
 
 // Protected route (ต้อง login ก่อน)
 router.get("/me", authenticate, getMeController);

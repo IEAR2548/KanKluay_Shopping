@@ -29,6 +29,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { fetchAllGlobalCategories } from '@/lib/api/categories';
 import { fetchAllProducts } from '@/lib/api/products';
 import UserNavbar from '@/components/layout/UserNavbar';
@@ -48,25 +49,28 @@ type Product = {
   quantity: number;
 };
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 const PLACEHOLDER_PRODUCT = 'https://placehold.co/200x200/f5f5f5/aaaaaa?text=No+Image';
 const PLACEHOLDER_CAT     = 'https://placehold.co/80x80/f5f5f5/aaaaaa?text=?';
 
 export default function HomePage() {
+  const searchParams = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts]     = useState<Product[]>([]);
-  const [search, setSearch]         = useState('');
+  const [products, setProducts]     = useState<any[]>([]);
+  
+  const search = searchParams.get('search') || '';
+  const catId  = searchParams.get('cat');
 
   useEffect(() => {
     fetchAllGlobalCategories().then(d => setCategories(Array.isArray(d) ? d : []));
     fetchAllProducts().then(d => setProducts(Array.isArray(d) ? d : []));
-
-    const params = new URLSearchParams(window.location.search);
-    setSearch(params.get('search') || '');
   }, []);
 
-  const filtered = products.filter(p =>
-    !search || p.product_name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products.filter(p => {
+    const matchSearch = !search || p.product_name.toLowerCase().includes(search.toLowerCase());
+    const matchCat    = !catId || String(p.global_cat_id) === String(catId);
+    return matchSearch && matchCat;
+  });
 
   return (
     <div className="space-y-5">
@@ -135,7 +139,7 @@ function ProductCard({ product }: { product: Product }) {
       {/* Image */}
       <div className="relative aspect-square bg-gray-50 overflow-hidden">
         <img
-          src={product.image_url || PLACEHOLDER_PRODUCT}
+          src={product.image_url ? `${API}${product.image_url}` : PLACEHOLDER_PRODUCT}
           alt={product.product_name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER_PRODUCT; }}

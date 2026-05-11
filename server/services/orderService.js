@@ -33,7 +33,8 @@ const getOrderById = async (id) => {
   const items = await db.query(`
     SELECT 
       oi.*,
-      p.product_name
+      p.product_name,
+      p.image_url
     FROM Order_Item oi
     JOIN Product p ON oi.product_id = p.product_id
     WHERE oi.order_id = $1

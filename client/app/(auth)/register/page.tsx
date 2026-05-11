@@ -45,7 +45,7 @@ export default function RegisterPage() {
     };
 
   // Step 1: ตรวจ info แล้วไป step password
-  const handleInfoNext = () => {
+  const handleInfoNext = async () => {
     const { firstname, lastname, username, email, phone_number } = form;
     if (!firstname || !lastname || !username || !email || !phone_number) {
       setError("กรุณากรอกข้อมูลให้ครบทุกช่อง");
@@ -55,8 +55,25 @@ export default function RegisterPage() {
       setError("รูปแบบ Email ไม่ถูกต้อง");
       return;
     }
-    setError("");
-    setStep("password");
+
+    setLoading(true);
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const res = await fetch(`${API_BASE}/auth/check-username/${username}`);
+      const data = await res.json();
+      if (data.exists) {
+        alert("ชื่อผู้ใช้ซ้ำ");
+        setError("ชื่อผู้ใช้ซ้ำ");
+        return;
+      }
+      
+      setError("");
+      setStep("password");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Step 2: ตรวจ password แล้ว register
@@ -112,7 +129,8 @@ export default function RegisterPage() {
           </div>
 
           {/* Right — Card */}
-          <div className="w-full md:w-[400px] bg-white rounded-2xl shadow-lg p-8">
+          <div className="w-full max-w-[400px] bg-white rounded-2xl shadow-lg p-6 sm:p-8 box-border mx-auto md:mx-0">
+          {/* <div className="w-full md:max-w-[400px] bg-white rounded-2xl shadow-lg p-8"> */}
             {/* STEP 1: ข้อมูลส่วนตัว */}
             {step === "info" && (
               <div className="flex flex-col gap-4">
@@ -126,14 +144,14 @@ export default function RegisterPage() {
                     placeholder="ชื่อจริง"
                     value={form.firstname}
                     onChange={set("firstname")}
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#1B4D3E] transition"
+                    className="flex-1 min-w-0 border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#1B4D3E] transition"
                   />
                   <input
                     type="text"
                     placeholder="นามสกุล"
                     value={form.lastname}
                     onChange={set("lastname")}
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#1B4D3E] transition"
+                    className="flex-1 min-w-0 border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#1B4D3E] transition"
                   />
                 </div>
 

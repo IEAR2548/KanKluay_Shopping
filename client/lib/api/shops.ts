@@ -13,7 +13,9 @@ export interface Shop {
 export async function fetchAllShops(): Promise<Shop[]> {
   const response = await fetch(`${API_URL}/shops`);
   if (!response.ok) throw new Error('Failed to fetch shops');
-  return response.json();
+  const json = await response.json();
+  // Backend may return { data: [...] } or a direct array
+  return Array.isArray(json) ? json : (json.data ?? []);
 }
 
 export async function fetchShopById(id: number): Promise<Shop> {

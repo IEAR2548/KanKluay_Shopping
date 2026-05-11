@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Routes ที่ต้อง login ก่อน
-const PROTECTED_ROUTES = ["/cart", "/checkout", "/my-purchases", "/orders", "/profile"];
+const PROTECTED_ROUTES = [
+  "/cart",
+  "/checkout",
+  "/my-purchases",
+  "/orders",
+  "/profile",
+];
 
 // Routes ที่ต้องเป็น admin
 const ADMIN_ROUTES = ["/admin"];
@@ -31,7 +37,7 @@ export function middleware(req: NextRequest) {
 
   // ถ้า login แล้วพยายามเข้า /login หรือ /register → redirect ไป home
   if (isLoggedIn && AUTH_ROUTES.some((r) => pathname.startsWith(r))) {
-    return NextResponse.redirect(new URL("/products", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   // ถ้าไม่ได้ login แล้วพยายามเข้า protected routes → redirect ไป login
@@ -42,7 +48,7 @@ export function middleware(req: NextRequest) {
   // ถ้าไม่ใช่ admin แล้วพยายามเข้า /admin → redirect ไป home
   if (ADMIN_ROUTES.some((r) => pathname.startsWith(r))) {
     if (!isLoggedIn || role !== "admin") {
-      return NextResponse.redirect(new URL("/products", req.url));
+      return NextResponse.redirect(new URL("/", req.url));
     }
   }
 
