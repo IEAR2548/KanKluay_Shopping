@@ -127,7 +127,7 @@ export function RevenueChart({
               color: "#555",
             }}
           >
-            {chartMode === "line" ? "▪️📊" : "📈"}
+            {chartMode === "line" ? "*Bar-chart" : "*Line-chart"}
           </button>
           <button style={{ background: "none", border: "none", cursor: "pointer", color: "#aaa", fontSize: 18 }}>⋮</button>
         </div>
@@ -140,8 +140,8 @@ export function RevenueChart({
       </div>
 
       {/* Chart */}
-      <div style={{ width: "100%", height: 260, minWidth: 0 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ width: "100%", height: 260, minWidth: 0, minHeight: 0 }}>
+        <ResponsiveContainer width="100%" height={260} minWidth={0}>
           {chartMode === "line" ? (
             <AreaChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <defs>
