@@ -16,6 +16,7 @@ interface Product {
   category_name: string;
   shop_name: string;
   quantity: number;
+  image_url: string | null;
 }
 
 function getStockStatus(qty: number): { label: string; color: string; bg: string } {
@@ -228,7 +229,17 @@ export default function ProductManagementPage() {
                           </td>
                           <td style={styles.td}>
                             <div style={styles.productCell}>
-                              <div style={styles.productThumb}>📦</div>
+                              <div style={styles.productThumb}>
+                                {p.image_url ? (
+                                  <img
+                                    src={`http://localhost:5000${p.image_url}`}
+                                    alt={p.product_name}
+                                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }}
+                                  />
+                                ) : (
+                                  <span>📦</span>
+                                )}
+                              </div>
                               <div>
                                 <div style={styles.productName}>{p.product_name}</div>
                                 <div style={styles.productCat}>{p.category_name}</div>

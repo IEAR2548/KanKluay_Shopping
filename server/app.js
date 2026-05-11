@@ -43,6 +43,11 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/users", userRoutes);
 app.use("/orders", orderRoutes);
 
+
+app.use('/uploads', express.static('public/uploads')); // serve รูป
+app.use('/upload', uploadRoutes);   
+
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
