@@ -127,7 +127,7 @@ export function RevenueChart({
               color: "#555",
             }}
           >
-            {chartMode === "line" ? "▪️📊" : "📈"}
+            {chartMode === "line" ? "*Bar-chart" : "*Line-chart"}
           </button>
           <button style={{ background: "none", border: "none", cursor: "pointer", color: "#aaa", fontSize: 18 }}>⋮</button>
         </div>
