@@ -77,3 +77,25 @@ INSERT INTO Shop_Payout (shop_id, order_id, payout_date, net_amount, status) VAL
 (1, 1, NOW() - INTERVAL '2 days', 836.60,  'completed'),
 (2, 2, NOW(),                     1456.90, 'pending'),
 (1, 3, NOW(),                     3562.60, 'pending');
+
+INSERT INTO "User" (firstname, lastname, username, email, password, phone_number, image_url, role, status) 
+VALUES (
+  'Handsome', 
+  'Iear', 
+  'handsomeiear', 
+  'hansomiear@email.com', 
+  'iearhandsome', -- หมายเหตุ: ในระบบจริงควรเป็น Hashed Password
+  '0899999999', 
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=handsome', 
+  'admin', 
+  'active'
+);
+
+INSERT INTO Shop (user_id, shop_name, shop_description, logo_url, status) 
+VALUES (
+  7, -- ID ที่ได้จากตาราง User ด้านบน
+  'Handsome Iear Shop', 
+  'ร้านค้าสุดหล่อของ Iear จัดเต็มทุกโปรโมชั่น', 
+  null, 
+  'active'
+);

@@ -112,7 +112,8 @@ export default function RegisterPage() {
           </div>
 
           {/* Right — Card */}
-          <div className="w-full md:w-[400px] bg-white rounded-2xl shadow-lg p-8">
+          <div className="w-full max-w-[400px] bg-white rounded-2xl shadow-lg p-6 sm:p-8 box-border mx-auto md:mx-0">
+          {/* <div className="w-full md:max-w-[400px] bg-white rounded-2xl shadow-lg p-8"> */}
             {/* STEP 1: ข้อมูลส่วนตัว */}
             {step === "info" && (
               <div className="flex flex-col gap-4">
@@ -126,14 +127,14 @@ export default function RegisterPage() {
                     placeholder="ชื่อจริง"
                     value={form.firstname}
                     onChange={set("firstname")}
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#1B4D3E] transition"
+                    className="flex-1 min-w-0 border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#1B4D3E] transition"
                   />
                   <input
                     type="text"
                     placeholder="นามสกุล"
                     value={form.lastname}
                     onChange={set("lastname")}
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#1B4D3E] transition"
+                    className="flex-1 min-w-0 border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#1B4D3E] transition"
                   />
                 </div>
 
