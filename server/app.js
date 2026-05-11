@@ -17,6 +17,7 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 
 const userRoutes       = require('./routes/userRoutes')
 const orderRoutes       = require('./routes/orderRoutes')
+const uploadRoutes = require('./routes/uploadRoutes');
 
 app.use('/shops',      shopRoutes);
 app.use('/products',   productRoutes);
@@ -26,6 +27,11 @@ app.use('/inventory', inventoryRoutes);
 
 app.use('/users',  userRoutes);
 app.use('/orders', orderRoutes);
+
+
+app.use('/uploads', express.static('public/uploads')); // serve รูป
+app.use('/upload', uploadRoutes);   
+
 
 // Health check endpoint
 app.get('/health', (req, res) => {
