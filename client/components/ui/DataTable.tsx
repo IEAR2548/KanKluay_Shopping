@@ -5,13 +5,13 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 
 export interface Column<T> {
-  key: keyof T | string;
+  key: string;
   label: string;
   align?: "left" | "center" | "right";
   render?: (row: T) => React.ReactNode;
 }
 
-interface DataTableProps<T extends Record<string, unknown>> {
+interface DataTableProps<T extends object> {
   title?: string;
   columns: Column<T>[];
   data: T[];
@@ -22,7 +22,7 @@ interface DataTableProps<T extends Record<string, unknown>> {
 
 // ─── Export CSV Helper ────────────────────────────────────────
 
-function exportCSV<T extends Record<string, unknown>>(
+function exportCSV<T extends object>(
   data: T[],
   columns: Column<T>[],
   filename = "export.csv"
@@ -33,7 +33,7 @@ function exportCSV<T extends Record<string, unknown>>(
       .map((col) => {
         const val = col.render
           ? String(col.render(row) ?? "")
-          : String(row[col.key as keyof T] ?? "");
+          : String((row as Record<string, unknown>)[col.key] ?? "");
         // escape commas/quotes
         return `"${val.replace(/"/g, '""')}"`;
       })
@@ -99,7 +99,7 @@ function Dropdown({ children, onClose }: DropdownProps) {
 
 // ─── Main DataTable ───────────────────────────────────────────
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T extends object>({
   title,
   columns,
   data,
@@ -136,7 +136,7 @@ export function DataTable<T extends Record<string, unknown>>({
       visibleColumns.some((col) => {
         const val = col.render
           ? String(col.render(row) ?? "")
-          : String(row[col.key as keyof T] ?? "");
+          : String((row as Record<string, unknown>)[col.key] ?? "");
         return val.toLowerCase().includes(q);
       })
     );
@@ -520,7 +520,7 @@ export function DataTable<T extends Record<string, unknown>>({
                         fontWeight: col.align === "right" ? 600 : 400,
                       }}
                     >
-                      {col.render ? col.render(row) : String(row[col.key as keyof T] ?? "")}
+                      {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "")}
                     </td>
                   ))}
                 </tr>
