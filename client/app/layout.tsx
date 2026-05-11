@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
 
-import UserNavbar from "@/components/layout/UserNavbar";
+
 
 export const metadata: Metadata = {
   title: "KanKluay Shopping",

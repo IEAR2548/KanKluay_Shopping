@@ -35,7 +35,7 @@ export default function ProductManagementPage() {
   const [selected, setSelected]     = useState<number[]>([]);
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
-  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editProduct] = useState<Product | null>(null);
   const [form, setForm]             = useState({ product_name: "", description: "", price: "", quantity: "" });
 
   useEffect(() => { fetchProducts(); }, []);
@@ -76,16 +76,7 @@ export default function ProductManagementPage() {
     fetchProducts();
   };
 
-  const handleEdit = (p: Product) => {
-    setEditProduct(p);
-    setForm({
-      product_name: p.product_name,
-      description:  p.description,
-      price:        String(p.price),
-      quantity:     String(p.quantity),
-    });
-    setShowModal(true);
-  };
+
 
   const handleAddNew = () => {
     router.push("/shop/product/add");

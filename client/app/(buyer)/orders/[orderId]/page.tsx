@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 
 const API = "http://localhost:5000";
-const USER_ID = 2;
+// const USER_ID = 2;
 
 interface OrderDetail {
   order_id: number;
@@ -69,7 +69,7 @@ export default function OrderTrackingPage() {
 
   const activeStep = getActiveStep(order);
   const isDelivered = order.shipping_status === "delivered";
-  const isShipping  = order.shipping_status === "shipping";
+  // const isShipping  = order.shipping_status === "shipping";
 
   const stepDates = [
     order.order_date,

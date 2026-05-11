@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Filter, ArrowUpDown, MoreHorizontal, 
-  Edit, Trash2, ChevronLeft, ChevronRight, UserPlus 
+  Edit, Trash2, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { 
   fetchUsers, createUser, updateUser, 

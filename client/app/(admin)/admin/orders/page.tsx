@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, Eye, Edit, Trash2, 
-  Package, CheckCircle, Clock, XCircle 
+  Search, Eye, Edit, Trash2
 } from 'lucide-react';
 import { fetchOrders, updateOrderStatus, deleteOrder } from '@/lib/api/orders';
 

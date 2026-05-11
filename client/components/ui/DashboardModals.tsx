@@ -29,15 +29,6 @@ interface Order {
 export type DetailsType = "users" | "shops" | "transactions" | null;
 
 // ─── Shared helpers ───────────────────────────────────────────
-
-function formatK(val: string | number): string {
-  const n = Number(val);
-  if (isNaN(n)) return "0";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
-  return String(n);
-}
-
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 async function fetchOrders(): Promise<Order[]> {

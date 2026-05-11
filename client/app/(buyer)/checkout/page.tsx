@@ -29,11 +29,11 @@ const SHIPPING_FEE = 29;
 export default function CheckoutPage() {
   const router = useRouter();
   const [items, setItems] = useState<CheckoutItem[]>([]);
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"promptpay" | "cash_on_delivery">("promptpay");
   const [loading, setLoading] = useState(false);
-  const [coupon, setCoupon] = useState("");
+
 
   useEffect(() => {
     // โหลด items จาก localStorage (ส่งมาจากหน้า Cart)

@@ -29,6 +29,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const userRoutes = require("./routes/userRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 // Middleware
 app.use("/auth", authRoutes);

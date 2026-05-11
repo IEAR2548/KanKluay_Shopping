@@ -57,7 +57,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function RevenueChart({
-  metric,
   metricLabel,
   metricValue,
   data,
@@ -152,7 +151,7 @@ export function RevenueChart({
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
               <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#aaa" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: "#aaa" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${v / 1000}k` : v} />
+              <YAxis tick={{ fontSize: 12, fill: "#aaa" }} axisLine={false} tickLine={false} tickFormatter={(v: any) => v >= 1000 ? `${v / 1000}k` : v} />
               <Tooltip content={<CustomTooltip />} />
               <Area
                 type="monotone"
@@ -168,10 +167,10 @@ export function RevenueChart({
             <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
               <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#aaa" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: "#aaa" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${v / 1000}k` : v} />
+              <YAxis tick={{ fontSize: 12, fill: "#aaa" }} axisLine={false} tickLine={false} tickFormatter={(v: any) => v >= 1000 ? `${v / 1000}k` : v} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="value" fill="#f5c518" radius={[6, 6, 0, 0]}>
-                {data.map((entry, index) => (
+                {data.map((_, index) => (
                   <rect
                     key={index}
                     fill={index === data.reduce((mi, d, i, arr) => d.value > arr[mi].value ? i : mi, 0) ? "#f5c518" : "#e8e8e8"}

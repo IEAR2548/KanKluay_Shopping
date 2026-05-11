@@ -393,12 +393,7 @@ const WEEKLY_SALES = [
 ];
 const TODAY_IDX = 2; // Wed highlight
 
-const TOTAL_SALES    = 350000;
-const TOTAL_ORDERS   = 1500;
-const SALES_CHANGE   = 2350;
-const ORDERS_CHANGE  = -35;
-const SALES_PCT      = 10.4;
-const ORDERS_PCT     = 7.4;
+
 
 // ─── Status badge ─────────────────────────────────────────────
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {

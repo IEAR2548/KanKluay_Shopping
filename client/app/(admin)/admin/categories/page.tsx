@@ -8,7 +8,6 @@ import {
   createGlobalCategory,
   deleteGlobalCategory,
   fetchAllLocalCategories,
-  fetchLocalCategoriesByShop,
   createLocalCategory,
   deleteLocalCategory,
 } from '@/lib/api/categories';
@@ -107,7 +106,7 @@ export default function CategoriesPage() {
     try {
       await createLocalCategory({
         shop_id: parseInt(formData.shopId),
-        global_category_id: parseInt(formData.globalCategoryId),
+        global_cat_id: parseInt(formData.globalCategoryId),
         category_name: formData.localCategoryName,
       });
       setFormData({ ...formData, shopId: '', globalCategoryId: '', localCategoryName: '' });

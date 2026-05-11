@@ -310,7 +310,7 @@ export default function DashboardPage() {
                   tick={{ fontSize: 12, fill: "#aaa" }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : v)}
+                  tickFormatter={(v: any) => (v >= 1000 ? `${v / 1000}k` : v)}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Area
