@@ -118,7 +118,7 @@ export default function UserManagementPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         {statCards.map((card, idx) => (
-          <div key={idx} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-32">
+          <div key={idx} className="bg-white rounded-xl p-5 shadow-sm border border-[#FEF3C7] flex flex-col justify-between h-32">
             <h3 className="text-gray-500 text-sm font-medium">{card.title}</h3>
             <div className="flex items-baseline gap-2 mt-1">
               <span className={`text-3xl font-bold ${card.valueColor}`}>{card.value}</span>
