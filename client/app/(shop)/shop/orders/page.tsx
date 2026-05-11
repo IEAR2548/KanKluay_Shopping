@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 
-const API     = "http://localhost:5000";
-const SHOP_ID = 1; // TODO: replace with session shop id
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import ShopSidebar from "@/components/layout/ShopSidebar";
+
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 // ─── Types ───────────────────────────────────────────────────
 interface Order {
@@ -38,64 +40,115 @@ interface OrderDetail {
 
 const TABS = ["All", "Pending", "To Ship", "Shipped", "Cancelled"];
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  delivered: { label: "Delivered", color: "#fff",     bg: "#28a745" },
-  shipping:  { label: "Shipping",  color: "#fff",     bg: "#f5a623" },
-  pending:   { label: "Pending",   color: "#555",     bg: "#e2e8f0" },
-  returned:  { label: "Returned",  color: "#fff",     bg: "#6c757d" },
-  completed: { label: "Completed", color: "#fff",     bg: "#28a745" },
-  cancelled: { label: "Cancelled", color: "#fff",     bg: "#dc3545" },
+const STATUS_MAP: Record<
+  string,
+  { label: string; color: string; bg: string }
+> = {
+  delivered: { label: "Delivered", color: "#fff", bg: "#28a745" },
+  shipping: { label: "Shipping", color: "#fff", bg: "#f5a623" },
+  pending: { label: "Pending", color: "#555", bg: "#e2e8f0" },
+  returned: { label: "Returned", color: "#fff", bg: "#6c757d" },
+  completed: { label: "Completed", color: "#fff", bg: "#28a745" },
+  cancelled: { label: "Cancelled", color: "#fff", bg: "#dc3545" },
 };
 
 function StatusBadge({ status }: { status: string }) {
   const s = STATUS_MAP[status] ?? { label: status, color: "#fff", bg: "#888" };
   return (
-    <span style={{
-      background: s.bg, color: s.color,
-      padding: "3px 12px", borderRadius: 20,
-      fontSize: 12, fontWeight: 600,
-    }}>{s.label}</span>
+    <span
+      style={{
+        background: s.bg,
+        color: s.color,
+        padding: "3px 12px",
+        borderRadius: 20,
+        fontSize: 12,
+        fontWeight: 600,
+      }}
+    >
+      {s.label}
+    </span>
   );
 }
 
 function formatDate(iso: string) {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-      + ", " + d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  } catch { return iso; }
+    return (
+      d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+      ", " +
+      d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    );
+  } catch {
+    return iso;
+  }
 }
 
 // ─── Main Page ───────────────────────────────────────────────
 export default function SellerOrdersPage() {
   const router = useRouter();
-  const [orders,      setOrders]      = useState<Order[]>([]);
-  const [filtered,    setFiltered]    = useState<Order[]>([]);
-  const [activeTab,   setActiveTab]   = useState("All");
-  const [selected,    setSelected]    = useState<OrderDetail | null>(null);
-  const [loading,     setLoading]     = useState(true);
-  const [carrier,     setCarrier]     = useState("");
-  const [tracking,    setTracking]    = useState("");
-  const [saving,      setSaving]      = useState(false);
-  const [page,        setPage]        = useState(1);
+  const { user, loading: userLoading } = useCurrentUser();
+  const [shopId, setShopId] = useState<number | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [filtered, setFiltered] = useState<Order[]>([]);
+  const [activeTab, setActiveTab] = useState("All");
+  const [selected, setSelected] = useState<OrderDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [carrier, setCarrier] = useState("");
+  const [tracking, setTracking] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    const fetchShop = async () => {
+      if (!user?.user_id) return;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlShopId = params.get('shopId');
+        if (urlShopId) {
+          setShopId(Number(urlShopId));
+          return;
+        }
+
+        const res = await fetch(`${API}/shops/user/${user.user_id}`);
+        const data = await res.json();
+        const shopList = Array.isArray(data) ? data : (data.data || []);
+        if (shopList.length > 0) {
+          setShopId(shopList[0].shop_id);
+        }
+      } catch (err) {
+        console.error("Fetch shop error:", err);
+      }
+    };
+    if (user) fetchShop();
+  }, [user]);
+
+  useEffect(() => {
+    if (shopId) fetchOrders();
+    else if (!userLoading && !user) setLoading(false);
+  }, [shopId, user, userLoading]);
 
   useEffect(() => {
     let list = [...orders];
-    if (activeTab === "Pending")   list = list.filter(o => o.shipping_status === "pending"  || o.order_status === "pending");
-    if (activeTab === "To Ship")   list = list.filter(o => o.shipping_status === "shipping");
-    if (activeTab === "Shipped")   list = list.filter(o => o.shipping_status === "delivered");
-    if (activeTab === "Cancelled") list = list.filter(o => o.order_status === "cancelled");
+    if (activeTab === "Pending")
+      list = list.filter(
+        (o) => o.shipping_status === "pending" || o.order_status === "pending",
+      );
+    if (activeTab === "To Ship")
+      list = list.filter((o) => o.shipping_status === "shipping");
+    if (activeTab === "Shipped")
+      list = list.filter((o) => o.shipping_status === "delivered");
+    if (activeTab === "Cancelled")
+      list = list.filter((o) => o.order_status === "cancelled");
     setFiltered(list);
     setPage(1);
   }, [activeTab, orders]);
 
   const fetchOrders = async () => {
+    if (!shopId) return;
     setLoading(true);
     try {
-      const res  = await fetch(`${API}/orders/shop/${SHOP_ID}`);
+      const res = await fetch(`${API}/orders/shop/${shopId}`);
       const json = await res.json();
       setOrders(json.data ?? []);
     } catch (err) {
@@ -107,9 +160,9 @@ export default function SellerOrdersPage() {
 
   const fetchOrderDetail = async (orderId: number) => {
     try {
-      const res  = await fetch(`${API}/orders/${orderId}`);
+      const res = await fetch(`${API}/orders/${orderId}`);
       const json = await res.json();
-      const d    = json.data;
+      const d = json.data;
       setSelected({
         ...d.order,
         items: d.items ?? [],
@@ -123,7 +176,8 @@ export default function SellerOrdersPage() {
 
   const handleConfirmTracking = async () => {
     if (!selected) return;
-    if (!carrier || !tracking) return alert("กรุณากรอก Carrier และ Tracking Number");
+    if (!carrier || !tracking)
+      return alert("กรุณากรอก Carrier และ Tracking Number");
     setSaving(true);
     try {
       await fetch(`${API}/orders/${selected.order_id}/status`, {
@@ -131,7 +185,9 @@ export default function SellerOrdersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shipping_status: "delivered" }),
       });
-      alert(`บันทึก Tracking สำเร็จ!\nCarrier: ${carrier}\nTracking: ${tracking}`);
+      alert(
+        `บันทึก Tracking สำเร็จ!\nCarrier: ${carrier}\nTracking: ${tracking}`,
+      );
       fetchOrders();
       setSelected(null);
     } catch (err) {
@@ -151,17 +207,7 @@ export default function SellerOrdersPage() {
 
       <div style={styles.layout}>
         {/* ─── Sidebar ─── */}
-        <div style={styles.sidebar}>
-          <div style={styles.sidebarItem} onClick={() => router.push("/shop/dashboard")}>
-            📊 Dashboard
-          </div>
-          <div style={styles.sidebarItem} onClick={() => router.push("/shop/product")}>
-            📦 Products
-          </div>
-          <div style={{ ...styles.sidebarItem, ...styles.sidebarActive }}>
-            🧾 Orders
-          </div>
-        </div>
+        <ShopSidebar />
 
         {/* ─── Content ─── */}
         <div style={styles.content}>

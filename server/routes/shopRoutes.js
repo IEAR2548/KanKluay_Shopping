@@ -8,6 +8,9 @@ router.get('/', shopController.getAllShops);
 // GET /shops/:id - ดูร้านเดียว
 router.get('/:id', shopController.getShopById);
 
+// GET /shops/user/:userId - ดูร้านตาม user_id
+router.get('/user/:userId', shopController.getShopByUserId);
+
 // POST /shops - เพิ่มร้าน (body: user_id, shop_name, shop_description)
 router.post('/', shopController.createShop);
 

@@ -281,11 +281,49 @@ export default function ProfileRecordPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    if (isGuest) return;
-    // Logic สำหรับยิง API บันทึกข้อมูลควรอยู่ตรงนี้
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    if (isGuest || !user) return;
+    
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      
+      // แยกชื่อ-นามสกุล (ง่ายๆ คือช่องแรกเป็นชื่อ ที่เหลือเป็นนามสกุล)
+      const nameParts = form.name.trim().split(' ');
+      const firstname = nameParts[0] || '';
+      const lastname  = nameParts.slice(1).join(' ') || '';
+
+      const updateData = {
+        firstname,
+        lastname,
+        // สำหรับ demo เราส่งข้อมูลที่มีอยู่เดิมไปด้วยเพื่อให้ API ครบถ้วน
+        username: user.username,
+        email: user.email,
+        phone_number: user.phone_number,
+        image_url: preview || user.image_url,
+      };
+
+      const res = await fetch(`${API}/users/${user.user_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // ส่งคุกกี้ไปด้วย
+        body: JSON.stringify(updateData),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Server error response:', errorText);
+        throw new Error('Failed to update profile: ' + errorText);
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      
+      // หมายเหตุ: ในระบบจริงอาจจะต้องการ refresh session หรือดึงข้อมูล user ใหม่
+      // window.location.reload(); 
+    } catch (err) {
+      console.error('Update profile error:', err);
+      alert('Failed to save information. Please try again.');
+    }
   };
 
   return (

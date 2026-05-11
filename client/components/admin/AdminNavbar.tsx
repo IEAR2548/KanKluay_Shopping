@@ -75,7 +75,7 @@ export default function AdminNavbar() {
           {loading ? (
             <div className="w-8 h-8 rounded-full bg-yellow-300 animate-pulse" />
           ) : (
-            <UserAvatar name={displayName} />
+            <UserAvatar name={displayName} imageUrl={user?.image_url} />
           )}
 
           <div className="flex flex-col items-start leading-none">

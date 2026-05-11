@@ -37,6 +37,9 @@ const registerController = async (req, res) => {
     if (err.message === "Email already in use") {
       return res.status(409).json({ message: "Email นี้ถูกใช้งานแล้ว" });
     }
+    if (err.message === "Username already in use") {
+      return res.status(409).json({ message: "ชื่อผู้ใช้ซ้ำ" });
+    }
     console.error("[registerController]", err);
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -99,9 +102,24 @@ const getMeController = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/auth/check-username/:username
+ */
+const checkUsernameController = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const user = await getUserByUsername(username);
+    return res.status(200).json({ exists: !!user });
+  } catch (err) {
+    console.error("[checkUsernameController]", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
   logoutController,
   getMeController,
+  checkUsernameController,
 };

@@ -31,6 +31,8 @@ interface Product {
   image_url?: string;
 }
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,7 +200,7 @@ export default function AdminProductsPage() {
                         <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center shrink-0">
                           {product.image_url ? (
                             <img
-                              src={`http://localhost:5000${product.image_url}`}
+                              src={`${API}${product.image_url}`}
                               alt={product.product_name}
                               className="w-full h-full object-cover rounded"
                             />

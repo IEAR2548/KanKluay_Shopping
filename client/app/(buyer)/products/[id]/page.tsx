@@ -19,6 +19,7 @@ type Product = {
   quantity: number;
 };
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const PLACEHOLDER = "https://placehold.co/400x400/f5f5f5/aaaaaa?text=No+Image";
 
 export default function ProductDetailPage() {
@@ -86,7 +87,7 @@ export default function ProductDetailPage() {
     );
 
   const mainImg = product.image_url
-    ? `http://localhost:5000${product.image_url}`
+    ? `${API}${product.image_url}`
     : PLACEHOLDER;
   const thumbs = [mainImg, mainImg, mainImg, mainImg]; // Demo thumbnails ใช้รูปหลักไปก่อน
 

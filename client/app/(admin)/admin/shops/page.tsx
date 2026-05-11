@@ -109,10 +109,11 @@ export default function ShopManagementPage() {
   const filteredShops = shops.filter((shop) => {
     const matchesTab =
       activeTab === "All" ||
-      shop.status.toLowerCase() === activeTab.toLowerCase();
+      (shop.status || 'active').toLowerCase() === activeTab.toLowerCase();
     const matchesSearch =
       search.trim() === "" ||
       shop.shop_name.toLowerCase().includes(search.toLowerCase()) ||
+      String(shop.shop_id).includes(search) ||
       String(shop.user_id).includes(search);
     return matchesTab && matchesSearch;
   });
@@ -155,8 +156,7 @@ export default function ShopManagementPage() {
     if (!window.confirm("Are you sure you want to delete this shop?")) return;
     try {
       await deleteShop(shopId);
-      const data = await fetchAllShops();
-      setShops(data);
+      setShops(await fetchAllShops());
     } catch (error) {
       console.error("Failed to delete shop", error);
       alert("Failed to delete shop");
@@ -167,8 +167,7 @@ export default function ShopManagementPage() {
     if (!editingShop) return;
     try {
       await updateShop(editingShop.shop_id, editForm as Partial<Shop>);
-      const data = await fetchAllShops();
-      setShops(data);
+      setShops(await fetchAllShops());
       setIsEditModalOpen(false);
     } catch (error) {
       console.error("Failed to update shop", error);
@@ -336,7 +335,7 @@ export default function ShopManagementPage() {
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
                     <td className="py-4 px-4 text-gray-800 font-medium">
-                      {shop.user_id}
+                      {shop.shop_id}
                     </td>
                     <td className="py-4 px-4 text-gray-600">
                       {shop.shop_name}

@@ -155,9 +155,19 @@ const deleteShop = async (req, res, next) => {
   }
 };
 
+const getShopByUserId = async (req, res, next) => {
+  try {
+    const shops = await shopService.getShopByUserId(req.params.userId);
+    res.json(shops);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getAllShops,
   getShopById,
+  getShopByUserId,
   createShop,
   updateShop,
   deleteShop,

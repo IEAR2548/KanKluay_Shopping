@@ -126,7 +126,7 @@ const db = require("../db");
 
 const getAllProducts = async () => {
   const result = await db.query(`
-    SELECT p.*, s.shop_name, lc.category_name, inv.quantity
+    SELECT p.*, s.shop_name, lc.category_name, lc.global_cat_id, inv.quantity
     FROM Product p
     JOIN Shop s ON p.shop_id = s.shop_id
     JOIN Local_Category lc ON p.local_cat_id = lc.local_cat_id

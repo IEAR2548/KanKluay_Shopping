@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { getUserByEmail, createUser } = require("./userService");
+const { getUserByEmail, getUserByUsername, createUser } = require("./userService");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -20,9 +20,15 @@ const register = async ({
   phone_number,
 }) => {
   // ตรวจ email ซ้ำ
-  const existing = await getUserByEmail(email);
-  if (existing) {
+  const existingEmail = await getUserByEmail(email);
+  if (existingEmail) {
     throw new Error("Email already in use");
+  }
+
+  // ตรวจ username ซ้ำ
+  const existingUser = await getUserByUsername(username);
+  if (existingUser) {
+    throw new Error("Username already in use");
   }
 
   // Hash password

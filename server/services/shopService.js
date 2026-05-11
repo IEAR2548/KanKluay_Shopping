@@ -86,11 +86,37 @@ const getShopById = async (id) => {
 };
 
 const createShop = async (user_id, shop_name, shop_description, logo_url) => {
-  const result = await db.query(
-    "INSERT INTO Shop (user_id, shop_name, shop_description, logo_url) VALUES ($1,$2,$3,$4) RETURNING *",
-    [user_id, shop_name, shop_description, logo_url || null],
-  );
-  return result.rows[0];
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    
+    // Check if user already has a shop
+    const existing = await client.query("SELECT shop_id FROM Shop WHERE user_id = $1 LIMIT 1", [user_id]);
+    if (existing.rows.length > 0) {
+      throw new Error("You already have a shop. One user can only have one shop.");
+    }
+    
+    // Create Shop
+    const shopResult = await client.query(
+      "INSERT INTO Shop (user_id, shop_name, shop_description, logo_url) VALUES ($1,$2,$3,$4) RETURNING *",
+      [user_id, shop_name, shop_description, logo_url || null],
+    );
+    const shop = shopResult.rows[0];
+
+    // Create Default Local Category (linked to General global cat, usually ID 1)
+    await client.query(
+      "INSERT INTO Local_Category (shop_id, global_cat_id, category_name) VALUES ($1, $2, $3)",
+      [shop.shop_id, 1, 'General']
+    );
+
+    await client.query("COMMIT");
+    return shop;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 const updateShop = async (id, shop_name, shop_description, logo_url) => {
@@ -133,9 +159,17 @@ const deleteShop = async (id) => {
   }
 };
 
+const getShopByUserId = async (userId) => {
+  const result = await db.query("SELECT * FROM Shop WHERE user_id = $1", [
+    userId,
+  ]);
+  return result.rows;
+};
+
 module.exports = {
   getAllShops,
   getShopById,
+  getShopByUserId,
   createShop,
   updateShop,
   deleteShop,

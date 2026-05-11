@@ -166,6 +166,17 @@ const getUserByEmail = async (email) => {
 };
 
 /**
+ * ดึง user จาก username (ใช้ใน authService)
+ */
+const getUserByUsername = async (username) => {
+  const result = await db.query(
+    `SELECT * FROM "User" WHERE username = $1 LIMIT 1`,
+    [username],
+  );
+  return result.rows[0] || null;
+};
+
+/**
  * สร้าง user ใหม่ (ใช้ใน register)
  */
 const createUser = async ({
@@ -355,6 +366,7 @@ const deleteAddress = (address_id, user_id) =>
 
 module.exports = {
   getUserByEmail,
+  getUserByUsername,
   createUser,
   getUserById,
   getAllUsers,

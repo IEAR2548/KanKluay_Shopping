@@ -45,7 +45,7 @@ export default function RegisterPage() {
     };
 
   // Step 1: ตรวจ info แล้วไป step password
-  const handleInfoNext = () => {
+  const handleInfoNext = async () => {
     const { firstname, lastname, username, email, phone_number } = form;
     if (!firstname || !lastname || !username || !email || !phone_number) {
       setError("กรุณากรอกข้อมูลให้ครบทุกช่อง");
@@ -55,8 +55,25 @@ export default function RegisterPage() {
       setError("รูปแบบ Email ไม่ถูกต้อง");
       return;
     }
-    setError("");
-    setStep("password");
+
+    setLoading(true);
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const res = await fetch(`${API_BASE}/auth/check-username/${username}`);
+      const data = await res.json();
+      if (data.exists) {
+        alert("ชื่อผู้ใช้ซ้ำ");
+        setError("ชื่อผู้ใช้ซ้ำ");
+        return;
+      }
+      
+      setError("");
+      setStep("password");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Step 2: ตรวจ password แล้ว register

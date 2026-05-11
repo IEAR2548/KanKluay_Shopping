@@ -382,8 +382,10 @@ function ProductFormPage({ mode }: { mode: "add" | "edit" }) {
   const productId = params?.productId as string | undefined;
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // ดึง shop_id จาก user ที่ login อยู่
+  // ดึง shop_id และ categories จาก user ที่ login อยู่
   const { user, loading: userLoading } = useCurrentUser();
+  const [shopId, setShopId] = useState<number | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     product_name: "",
@@ -391,10 +393,34 @@ function ProductFormPage({ mode }: { mode: "add" | "edit" }) {
     price: "",
     quantity: "",
     image_url: "",
+    local_cat_id: "",
   });
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchShopAndCats = async () => {
+      if (!user?.user_id) return;
+      try {
+        const res = await fetch(`${API}/shops/user/${user.user_id}`);
+        const shops = await res.json();
+        const shopList = Array.isArray(shops) ? shops : (shops.data || []);
+        
+        if (shopList.length > 0) {
+          const sId = shopList[0].shop_id;
+          setShopId(sId);
+          
+          const catRes = await fetch(`${API}/categories/local/shop/${sId}`);
+          const catJson = await catRes.json();
+          setCategories(Array.isArray(catJson) ? catJson : (catJson.data || []));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (user) fetchShopAndCats();
+  }, [user]);
 
   useEffect(() => {
     if (mode !== "edit" || !productId) return;
@@ -408,6 +434,7 @@ function ProductFormPage({ mode }: { mode: "add" | "edit" }) {
           price: String(p.price ?? ""),
           quantity: String(p.quantity ?? ""),
           image_url: p.image_url ?? "",
+          local_cat_id: String(p.local_cat_id || ""),
         });
         if (p.image_url) setPreview(`${API}${p.image_url}`);
       })
@@ -440,8 +467,8 @@ function ProductFormPage({ mode }: { mode: "add" | "edit" }) {
   const handleSave = async () => {
     if (!form.product_name || !form.price) return alert("กรุณากรอกชื่อและราคา");
 
-    // ตรวจสอบว่ามี user และ shop_id ก่อน save
-    if (!user?.user_id) return alert("ไม่พบข้อมูลผู้ใช้ กรุณา login ใหม่");
+    // ตรวจสอบว่ามี shop_id ก่อน save
+    if (!shopId) return alert("ไม่พบข้อมูลร้านค้า กรุณาลองใหม่อีกครั้ง");
 
     setSaving(true);
     try {
@@ -454,6 +481,7 @@ function ProductFormPage({ mode }: { mode: "add" | "edit" }) {
             description: form.description,
             price: parseFloat(form.price) || 0,
             image_url: form.image_url || null,
+            local_cat_id: parseInt(form.local_cat_id) || undefined,
           }),
         });
         await fetch(`${API}/inventory/${productId}`, {
@@ -466,8 +494,8 @@ function ProductFormPage({ mode }: { mode: "add" | "edit" }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            shop_id: user.user_id, // ใช้ user_id จริงแทน hardcode
-            local_cat_id: 1,
+            shop_id: shopId,
+            local_cat_id: parseInt(form.local_cat_id) || (categories.length > 0 ? categories[0].local_cat_id : 1),
             product_name: form.product_name,
             description: form.description,
             price: parseFloat(form.price) || 0,
@@ -637,6 +665,24 @@ function ProductFormPage({ mode }: { mode: "add" | "edit" }) {
                     setForm({ ...form, quantity: e.target.value })
                   }
                 />
+
+                <label style={{ ...styles.label, marginTop: 20 }}>
+                  Category
+                </label>
+                <select
+                  style={styles.input}
+                  value={form.local_cat_id}
+                  onChange={(e) =>
+                    setForm({ ...form, local_cat_id: e.target.value })
+                  }
+                >
+                  <option value="">-- Select Category --</option>
+                  {categories.map((c: any) => (
+                    <option key={c.local_cat_id} value={c.local_cat_id}>
+                      {c.category_name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
