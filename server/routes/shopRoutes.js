@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const shopController = require('../controllers/shopController');
-
+const shopStatsController = require('../controllers/shopStatsController');
 // GET /shops - ดูร้านทั้งหมด
 router.get('/', shopController.getAllShops);
 
@@ -16,5 +16,8 @@ router.put('/:id', shopController.updateShop);
 
 // DELETE /shops/:id - ลบร้าน
 router.delete('/:id', shopController.deleteShop);
+
+
+router.get('/:shopId/stats', shopStatsController.getShopStats);
 
 module.exports = router;

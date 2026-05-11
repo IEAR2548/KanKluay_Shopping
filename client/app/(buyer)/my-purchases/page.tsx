@@ -12,6 +12,7 @@ interface OrderItem {
   product_name: string;
   quantity: number;
   price_at_purchase: number;
+  image_url?: string | null;
 }
 
 interface Order {
@@ -110,7 +111,7 @@ function OrderCard({ order }: { order: Order }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/orders/${order.order_id}`)
+    fetch(`${API}/orders/${order.order_id}`) // ใช้ตัวแปร API ที่ประกาศไว้ด้านบน
       .then((r) => r.json())
       .then((json) => {
         setItems(json.data?.items ?? []);
@@ -126,7 +127,6 @@ function OrderCard({ order }: { order: Order }) {
 
   return (
     <div style={styles.orderCard}>
-      {/* shop header */}
       <div style={styles.orderHeader}>
         <span style={styles.shopName}>{order.shop_name ?? `Shop #${order.shop_id}`}</span>
         <button style={styles.chatBtn}>💬 Chat</button>
@@ -136,7 +136,6 @@ function OrderCard({ order }: { order: Order }) {
         </span>
       </div>
 
-      {/* items */}
       {!loaded ? (
         <div style={styles.itemRow}>
           <div style={{ color: "#aaa", fontSize: 13 }}>กำลังโหลดรายการ...</div>
@@ -144,14 +143,27 @@ function OrderCard({ order }: { order: Order }) {
       ) : (
         items.map((item) => (
           <div key={item.product_id} style={styles.itemRow}>
-            <div style={styles.itemImg}>📦</div>
+            {/* แก้ไขตรงนี้: ส่วนแสดงรูปภาพสินค้า */}
+            <div style={styles.itemImg}>
+              {item.image_url ? (
+                <img
+                  src={`${API}${item.image_url}`}
+                  alt={item.product_name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }}
+                />
+              ) : (
+                <span>📦</span>
+              )}
+            </div>
+            
             <div style={styles.itemInfo}>
               <div style={styles.itemName}>
-                {item.product_name} x{item.quantity}
+                {item.product_name}
               </div>
+              <div style={{ fontSize: 12, color: "#888" }}>x{item.quantity}</div>
             </div>
             <div style={styles.itemPrice}>
-              {Number(item.price_at_purchase).toFixed(2)}
+              ฿{Number(item.price_at_purchase).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
           </div>
         ))
@@ -159,10 +171,9 @@ function OrderCard({ order }: { order: Order }) {
 
       <div style={styles.divider} />
 
-      {/* footer */}
       <div style={styles.orderFooter}>
         <div style={styles.statusTag}>
-          Status:{" "}
+          Shipping Status:{" "}
           <span style={{ color: shippingColor, fontWeight: 600 }}>
             ● {shippingLabel}
           </span>
@@ -171,7 +182,7 @@ function OrderCard({ order }: { order: Order }) {
           <button style={styles.contactBtn}>💬 Contact Seller</button>
           <button style={styles.viewOrderBtn} onClick={() => router.push(`/orders/${order.order_id}`)}>🛒 View Order</button>
           <span style={styles.totalText}>
-            Total: {Number(order.total_amount).toFixed(2)}
+            Total: ฿{Number(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </span>
         </div>
       </div>
