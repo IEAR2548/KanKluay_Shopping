@@ -13,6 +13,9 @@ const productRoutes    = require('./routes/productRoutes');
 const categoryRoutes   = require('./routes/categoryRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
+const reportRoutes = require("./routes/reportRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+
 
 
 const userRoutes       = require('./routes/userRoutes')
@@ -23,6 +26,8 @@ app.use('/products',   productRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/cart', cartRoutes);
 app.use('/inventory', inventoryRoutes);
+app.use("/reports", reportRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 app.use('/users',  userRoutes);
 app.use('/orders', orderRoutes);
