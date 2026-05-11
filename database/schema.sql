@@ -10,6 +10,7 @@ CREATE TABLE "User" (
     email        VARCHAR(100) NOT NULL UNIQUE,
     password     VARCHAR(255) NOT NULL,
     phone_number VARCHAR(15),
+    image_url    TEXT,
     role         VARCHAR(20)  NOT NULL DEFAULT 'user'
                               CHECK (role IN ('user', 'admin')),
     status       VARCHAR(20)  NOT NULL DEFAULT 'active'
@@ -31,6 +32,7 @@ CREATE TABLE Shop (
     user_id          INTEGER      NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
     shop_name        VARCHAR(100) NOT NULL,
     shop_description TEXT,
+    logo_url        TEXT,
     status           VARCHAR(20)  NOT NULL DEFAULT 'active'
                                   CHECK (status IN ('active', 'inactive', 'suspended')),
     created_at       TIMESTAMP    NOT NULL DEFAULT NOW()
@@ -38,14 +40,16 @@ CREATE TABLE Shop (
 
 CREATE TABLE Global_Category (
     global_cat_id SERIAL PRIMARY KEY,
-    category_name VARCHAR(50) NOT NULL
+    category_name VARCHAR(50) NOT NULL,
+    image_url     TEXT
 );
 
 CREATE TABLE Local_Category (
     local_cat_id  SERIAL PRIMARY KEY,
     shop_id       INTEGER     NOT NULL REFERENCES Shop(shop_id) ON DELETE CASCADE,
     global_cat_id INTEGER     NOT NULL REFERENCES Global_Category(global_cat_id) ON DELETE RESTRICT,
-    category_name VARCHAR(50) NOT NULL
+    category_name VARCHAR(50) NOT NULL,
+    image_url     TEXT
 );
 
 CREATE TABLE Product (
@@ -54,7 +58,8 @@ CREATE TABLE Product (
     local_cat_id INTEGER        NOT NULL REFERENCES Local_Category(local_cat_id) ON DELETE RESTRICT,
     product_name VARCHAR(255)   NOT NULL,
     description  TEXT,
-    price        DECIMAL(10, 2) NOT NULL
+    price        DECIMAL(10, 2) NOT NULL,
+    image_url    TEXT
 );
 
 CREATE TABLE Inventory (
