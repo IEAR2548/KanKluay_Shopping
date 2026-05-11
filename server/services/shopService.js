@@ -119,11 +119,28 @@ const createShop = async (user_id, shop_name, shop_description, logo_url) => {
   }
 };
 
-const updateShop = async (id, shop_name, shop_description, logo_url) => {
-  const result = await db.query(
-    "UPDATE Shop SET shop_name=$1, shop_description=$2, logo_url=$3 WHERE shop_id=$4 RETURNING *",
-    [shop_name, shop_description, logo_url || null, id],
-  );
+const updateShop = async (id, shop_name, shop_description, logo_url, status) => {
+  const validStatuses = ['active', 'inactive', 'suspended'];
+  const safeStatus = validStatuses.includes(status) ? status : undefined;
+
+  let query;
+  let params;
+
+  if (safeStatus) {
+    query = `UPDATE Shop
+             SET shop_name=$1, shop_description=$2, logo_url=$3, status=$5
+             WHERE shop_id=$4
+             RETURNING *`;
+    params = [shop_name, shop_description, logo_url || null, id, safeStatus];
+  } else {
+    query = `UPDATE Shop
+             SET shop_name=$1, shop_description=$2, logo_url=$3
+             WHERE shop_id=$4
+             RETURNING *`;
+    params = [shop_name, shop_description, logo_url || null, id];
+  }
+
+  const result = await db.query(query, params);
   return result.rows[0];
 };
 

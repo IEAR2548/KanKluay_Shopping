@@ -129,7 +129,7 @@ const createShop = async (req, res, next) => {
 
 const updateShop = async (req, res, next) => {
   try {
-    const { shop_name, shop_description, logo_url } = req.body;
+    const { shop_name, shop_description, logo_url, status } = req.body;
     if (!shop_name)
       return res.status(400).json({ error: "shop_name is required" });
     const shop = await shopService.updateShop(
@@ -137,6 +137,7 @@ const updateShop = async (req, res, next) => {
       shop_name,
       shop_description,
       logo_url,
+      status,
     );
     if (!shop) return res.status(404).json({ error: "Shop not found" });
     res.json(shop);

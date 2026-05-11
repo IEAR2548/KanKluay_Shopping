@@ -192,7 +192,7 @@ export default function SellerDashboardPage() {
                 <div style={styles.statCard}>
                   <div style={styles.statLabel}>Total Sales</div>
                   <div style={styles.statRow}>
-                    <span style={styles.statValue}>$ {stats.total_sales.toLocaleString()}</span>
+                    <span style={styles.statValue}>฿ {stats.total_sales.toLocaleString()}</span>
                     <span style={{ ...styles.statPct, color: "#28a745" }}>
                       {stats.sales_pct >= 0 ? "↑" : "↓"} {Math.abs(stats.sales_pct)}%
                     </span>

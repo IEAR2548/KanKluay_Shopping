@@ -2,7 +2,6 @@
 
 import { useState, useEffect, CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import UserNavbar from "@/components/layout/UserNavbar";
 import ProfileSidebar from "@/components/layout/ProfileSidebar";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
@@ -66,29 +65,24 @@ export default function MyPurchasePage() {
   };
 
   return (
-    <div style={styles.page}>
-      <UserNavbar />
+    <div style={styles.layout}>
+      {/* ─── Sidebar ─── */}
+      <ProfileSidebar 
+        username={user?.username || user?.firstname || 'User'} 
+        imageUrl={user?.image_url} 
+      />
 
-      {/* ─── Main layout ─── */}
-      <div style={styles.layout}>
-        {/* ─── Sidebar ─── */}
-        <ProfileSidebar 
-          username={user?.username || user?.firstname || 'User'} 
-          imageUrl={user?.image_url} 
-        />
-
-        {/* ─── Content ─── */}
-        <div style={styles.content}>
-          {loading ? (
-            <div style={styles.empty}>กำลังโหลด...</div>
-          ) : orders.length === 0 ? (
-            <div style={styles.empty}>ไม่มีรายการสั่งซื้อ</div>
-          ) : (
-            orders.map((order) => (
-              <OrderCard key={order.order_id} order={order} />
-            ))
-          )}
-        </div>
+      {/* ─── Content ─── */}
+      <div style={styles.content}>
+        {loading ? (
+          <div style={styles.empty}>กำลังโหลด...</div>
+        ) : orders.length === 0 ? (
+          <div style={styles.empty}>ไม่มีรายการสั่งซื้อ</div>
+        ) : (
+          orders.map((order) => (
+            <OrderCard key={order.order_id} order={order} />
+          ))
+        )}
       </div>
     </div>
   );
@@ -185,9 +179,8 @@ function OrderCard({ order }: { order: Order }) {
 
 // ─── Styles ──────────────────────────────────────────────────
 const styles: Record<string, CSSProperties> = {
-  page: { fontFamily: "Sarabun, sans-serif", background: "#f5f5f5", minHeight: "100vh" },
   layout: {
-    maxWidth: 1100, margin: "24px auto", padding: "0 16px",
+    maxWidth: 1100, margin: "0 auto", padding: "0 16px",
     display: "flex", gap: 16, alignItems: "flex-start",
   },
   content: { flex: 1 },
