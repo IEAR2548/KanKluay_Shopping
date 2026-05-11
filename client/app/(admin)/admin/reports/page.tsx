@@ -1,6 +1,6 @@
 "use client";
 
-// client/app/reports/page.tsx
+// client/app/(admin)/admin/reports/page.tsx
 
 import React, { useEffect, useState, useCallback } from "react";
 import { StatCard } from "@/components/ui/StatCard";
@@ -15,6 +15,7 @@ import {
   ShopRevenue,
   DailyRevenue,
 } from "@/lib/api/reports";
+
 // ─── Types ───────────────────────────────────────────────────
 
 type TimeRange = "lastWeek" | "lastMonth" | "lastQuarter" | "lastYear";
@@ -32,9 +33,12 @@ function formatK(val: string | number): string {
 
 function getDateRange(range: TimeRange): { startDate: string; endDate: string } {
   const now = new Date();
-  const end = now.toISOString().split("T")[0];
-  let start = new Date(now);
 
+  const endDate = new Date(now);
+  endDate.setDate(now.getDate() + 1); // +1 เพื่อ cover timezone
+  const end = endDate.toISOString().split("T")[0];
+
+  const start = new Date(now);
   if (range === "lastWeek") start.setDate(now.getDate() - 7);
   else if (range === "lastMonth") start.setMonth(now.getMonth() - 1);
   else if (range === "lastQuarter") start.setMonth(now.getMonth() - 3);
@@ -43,17 +47,127 @@ function getDateRange(range: TimeRange): { startDate: string; endDate: string } 
   return { startDate: start.toISOString().split("T")[0], endDate: end };
 }
 
-function toChartData(
-  daily: DailyRevenue[],
-  key: ActiveMetric
-): { label: string; value: number }[] {
+function toChartData(daily: DailyRevenue[], key: ActiveMetric): { label: string; value: number }[] {
   return daily.map((d) => ({
-    label: new Date(d.date).toLocaleDateString("en-US", { weekday: "short" }),
+    // ใช้ UTC date ไม่งั้น label วันจะเพี้ยน -1 วัน
+    label: new Date(d.date).toLocaleDateString("en-US", { 
+      weekday: "short",
+      timeZone: "UTC" // ← เพิ่มตรงนี้
+    }),
     value: Number(d[key]) || 0,
   }));
 }
 
-// ─── Columns definitions ──────────────────────────────────────
+// ─── Details Modal ────────────────────────────────────────────
+
+interface DetailsModalProps {
+  title: string;
+  summary: SummaryData;
+  onClose: () => void;
+}
+
+function DetailsModal({ title, summary, onClose }: DetailsModalProps) {
+  const items = [
+    { label: "Total Orders", value: Number(summary.total_orders).toLocaleString() },
+    { label: "Total Revenue", value: `฿ ${Number(summary.total_revenue).toLocaleString()}` },
+    { label: "Platform Fee", value: `฿ ${Number(summary.total_platform_fee).toLocaleString()}` },
+    { label: "Net Amount", value: `฿ ${Number(summary.total_net_amount).toLocaleString()}` },
+    { label: "Completed Orders", value: Number(summary.completed_orders).toLocaleString() },
+    { label: "Pending Orders", value: Number(summary.pending_orders).toLocaleString() },
+    { label: "Cancelled Orders", value: Number(summary.cancelled_orders).toLocaleString() },
+  ];
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.35)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        backdropFilter: "blur(2px)",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff",
+          borderRadius: 20,
+          padding: "32px 36px",
+          width: 420,
+          maxWidth: "90vw",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <h2 style={{ fontWeight: 800, fontSize: 20, margin: 0 }}>{title} — Details</h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: "#f5f5f5",
+              border: "none",
+              borderRadius: 8,
+              width: 32,
+              height: 32,
+              cursor: "pointer",
+              fontSize: 16,
+              color: "#555",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Items */}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {items.map((item, idx) => (
+            <div
+              key={item.label}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "14px 0",
+                borderBottom: idx < items.length - 1 ? "1px solid #f0f0f0" : "none",
+              }}
+            >
+              <span style={{ fontSize: 14, color: "#666" }}>{item.label}</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{item.value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 24,
+            width: "100%",
+            padding: "12px 0",
+            borderRadius: 24,
+            border: "none",
+            background: "#f5c518",
+            color: "#111",
+            fontWeight: 700,
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Column definitions (ไม่มี edit/delete) ──────────────────
 
 const shopRevenueColumns: Column<ShopRevenue>[] = [
   { key: "shop_id", label: "ShopId", render: (r) => `SID${r.shop_id}` },
@@ -62,21 +176,21 @@ const shopRevenueColumns: Column<ShopRevenue>[] = [
   { key: "total_revenue", label: "Total Sales", align: "right", render: (r) => formatK(r.total_revenue) },
 ];
 
-const shopReturnColumns: Column<ShopRevenue & { returning_rate?: string }>[] = [
+const shopReturnColumns: Column<ShopRevenue>[] = [
   { key: "shop_id", label: "ShopId", render: (r) => `SID${r.shop_id}` },
   { key: "shop_name", label: "Shop Name" },
   { key: "total_orders", label: "Completed Order", align: "center" },
   {
-    key: "returning_rate",
+    key: "total_net_amount",
     label: "Total Returned",
     align: "center",
     render: (r) => Math.round(Number(r.total_orders) * 0.1).toLocaleString(),
   },
   {
-    key: "returning_rate",
+    key: "shop_status",
     label: "Returning Rate",
     align: "center",
-    render: (r) => "10%",
+    render: () => "10%",
   },
 ];
 
@@ -89,27 +203,30 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<TimeRange>("lastWeek");
   const [activeMetric, setActiveMetric] = useState<ActiveMetric>("revenue");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
 
-  const loadData = useCallback(async (range: TimeRange) => {
-    try {
-      setLoading(true);
-      const { startDate, endDate } = getDateRange(range);
-
-      const [sum, daily, shops] = await Promise.all([
-        fetchSummary({ startDate, endDate }),
-        fetchDailyRevenue({ startDate, endDate }),
-        fetchRevenueByShop({ startDate, endDate }),
-      ]);
-
-      setSummary(sum);
-      setChartData(toChartData(daily, activeMetric));
-      setShopData(shops);
-    } catch (err) {
-      console.error("Failed to load report data:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [activeMetric]);
+  const loadData = useCallback(
+    async (range: TimeRange) => {
+      try {
+        setLoading(true);
+        const { startDate, endDate } = getDateRange(range);
+        const [sum, daily, shops] = await Promise.all([
+          fetchSummary(),
+          fetchDailyRevenue({ startDate, endDate }),
+          fetchRevenueByShop({ startDate, endDate }),
+        ]);
+        setSummary(sum);
+        setChartData(toChartData(daily, activeMetric));
+        setShopData(shops);
+      } catch (err) {
+        console.error("Failed to load report data:", err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     loadData(timeRange);
@@ -117,20 +234,18 @@ export default function ReportsPage() {
 
   const handleMetricClick = (metric: ActiveMetric) => {
     setActiveMetric(metric);
-    if (summary) {
-      const { startDate, endDate } = getDateRange(timeRange);
-      fetchDailyRevenue({ startDate, endDate }).then((daily) => {
-        setChartData(toChartData(daily, metric));
-      });
-    }
+    const { startDate, endDate } = getDateRange(timeRange);
+    fetchDailyRevenue({ startDate, endDate }).then((daily) => {
+      setChartData(toChartData(daily, metric));
+    });
   };
 
-  // ─── Stat card config ──────────────────────────────────────
-  const statCards: {
-    title: string;
-    metric: ActiveMetric;
-    valueKey: keyof SummaryData;
-  }[] = [
+  const handleDetails = (title: string) => {
+    setModalTitle(title);
+    setModalOpen(true);
+  };
+
+  const statCards: { title: string; metric: ActiveMetric; valueKey: keyof SummaryData }[] = [
     { title: "Total Sales", metric: "revenue", valueKey: "total_revenue" },
     { title: "Total Fees", metric: "platform_fee", valueKey: "total_platform_fee" },
     { title: "Net Revenue", metric: "net_amount", valueKey: "total_net_amount" },
@@ -145,16 +260,7 @@ export default function ReportsPage() {
         fontFamily: "'Noto Sans Thai', 'Segoe UI', sans-serif",
       }}
     >
-      {/* Page title */}
-      <h1
-        style={{
-          fontWeight: 800,
-          fontSize: 24,
-          marginBottom: 24,
-          color: "#111",
-          letterSpacing: "-0.5px",
-        }}
-      >
+      <h1 style={{ fontWeight: 800, fontSize: 24, marginBottom: 24, color: "#111" }}>
         Report
       </h1>
 
@@ -168,8 +274,7 @@ export default function ReportsPage() {
               flex: 1,
               minWidth: 220,
               cursor: "pointer",
-              outline:
-                activeMetric === card.metric ? "2.5px solid #f5c518" : "2.5px solid transparent",
+              outline: activeMetric === card.metric ? "2.5px solid #f5c518" : "2.5px solid transparent",
               borderRadius: 16,
               transition: "outline 0.15s",
             }}
@@ -179,7 +284,7 @@ export default function ReportsPage() {
               value={loading ? "…" : formatK(summary?.[card.valueKey] ?? 0)}
               change={10.4}
               previousLabel="(+ 235)"
-              onDetails={() => handleMetricClick(card.metric)}
+              onDetails={() => handleDetails(card.title)}
             />
           </div>
         ))}
@@ -189,44 +294,31 @@ export default function ReportsPage() {
       <RevenueChart
         metric={activeMetric}
         metricLabel={
-          activeMetric === "revenue"
-            ? "Total Sales"
-            : activeMetric === "platform_fee"
-            ? "Total Fees"
-            : "Net Revenue"
+          activeMetric === "revenue" ? "Total Sales"
+          : activeMetric === "platform_fee" ? "Total Fees"
+          : "Net Revenue"
         }
         metricValue={
-          loading
-            ? "…"
-            : formatK(
-                summary?.[
-                  activeMetric === "revenue"
-                    ? "total_revenue"
-                    : activeMetric === "platform_fee"
-                    ? "total_platform_fee"
-                    : "total_net_amount"
-                ] ?? 0
-              )
+          loading ? "…"
+          : formatK(
+              summary?.[
+                activeMetric === "revenue" ? "total_revenue"
+                : activeMetric === "platform_fee" ? "total_platform_fee"
+                : "total_net_amount"
+              ] ?? 0
+            )
         }
         data={chartData}
         onRangeChange={(range) => setTimeRange(range as TimeRange)}
         activeRange={timeRange}
       />
 
-      {/* ── Tables (Tab Switch) ── */}
+      {/* ── Tables ── */}
       <div style={{ marginTop: 32 }}>
         <TabSwitcher
           tabs={[
-            {
-              label: "Top Performer By Categories",
-              key: "top",
-              badge: `${shopData.length}.5k`,
-            },
-            {
-              label: "Shop Returns Analytics",
-              key: "returns",
-              badge: `${shopData.length}.5k`,
-            },
+            { label: "Top Performer By Categories", key: "top", badge: `${shopData.length}.5k` },
+            { label: "Shop Returns Analytics", key: "returns", badge: `${shopData.length}.5k` },
           ]}
           defaultTab="top"
         >
@@ -239,8 +331,6 @@ export default function ReportsPage() {
                 pageSize={5}
                 searchable
                 searchPlaceholder="Search Shop Name"
-                onEdit={(row) => console.log("edit", row)}
-                onDelete={(row) => console.log("delete", row)}
               />
             ) : (
               <DataTable<ShopRevenue>
@@ -249,14 +339,21 @@ export default function ReportsPage() {
                 data={shopData}
                 pageSize={5}
                 searchable
-                searchPlaceholder="Search Shop"
-                onEdit={(row) => console.log("edit", row)}
-                onDelete={(row) => console.log("delete", row)}
+                searchPlaceholder="Search Shop Name"
               />
             )
           }
         </TabSwitcher>
       </div>
+
+      {/* ── Details Modal ── */}
+      {modalOpen && summary && (
+        <DetailsModal
+          title={modalTitle}
+          summary={summary}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
 
       {/* Loading overlay */}
       {loading && (

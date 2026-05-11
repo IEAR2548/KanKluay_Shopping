@@ -1,22 +1,28 @@
-const pool = require("../db"); // ปรับ path ให้ตรงกับ db connection ของโปรเจกต์
+const pool = require("../db");
 
-//  1. สรุปภาพรวม (Summary Cards บน Dashboard)
+// helper สร้าง date filter ที่ครอบคลุมทั้งวัน
+// ใช้ >= startDate AND < (endDate + 1 day) แทน BETWEEN เพื่อให้รวม timestamp ในวันสุดท้ายด้วย
+const makeDateFilter = (startParam, endParam, alias = "o") => ({
+  sql: `AND ${alias}.order_date >= $${startParam} AND ${alias}.order_date < ($${endParam}::date + INTERVAL '1 day')`,
+});
+
+//  1. สรุปภาพรวม (Summary Cards)
 const getSummary = async ({ startDate, endDate } = {}) => {
-  const dateFilter =
-    startDate && endDate
-      ? `AND o.order_date BETWEEN $1 AND $2`
-      : "";
-  const params = startDate && endDate ? [startDate, endDate] : [];
+  const hasDate = startDate && endDate;
+  const dateFilter = hasDate
+    ? `AND o.order_date >= $1 AND o.order_date < ($2::date + INTERVAL '1 day')`
+    : "";
+  const params = hasDate ? [startDate, endDate] : [];
 
   const result = await pool.query(
     `SELECT
-       COUNT(*)                                        AS total_orders,
-       COALESCE(SUM(o.total_amount), 0)               AS total_revenue,
-       COALESCE(SUM(o.platform_fee), 0)               AS total_platform_fee,
-       COALESCE(SUM(o.net_amount), 0)                 AS total_net_amount,
-       COUNT(*) FILTER (WHERE o.order_status = 'completed')   AS completed_orders,
-       COUNT(*) FILTER (WHERE o.order_status = 'cancelled')   AS cancelled_orders,
-       COUNT(*) FILTER (WHERE o.order_status = 'pending')     AS pending_orders
+       COUNT(*)                                                       AS total_orders,
+       COALESCE(SUM(o.total_amount), 0)                              AS total_revenue,
+       COALESCE(SUM(o.platform_fee), 0)                              AS total_platform_fee,
+       COALESCE(SUM(o.net_amount), 0)                                AS total_net_amount,
+       COUNT(*) FILTER (WHERE o.order_status = 'completed')          AS completed_orders,
+       COUNT(*) FILTER (WHERE o.order_status = 'cancelled')          AS cancelled_orders,
+       COUNT(*) FILTER (WHERE o.order_status = 'pending')            AS pending_orders
      FROM "Order" o
      WHERE 1=1 ${dateFilter}`,
     params
@@ -29,13 +35,14 @@ const getSummary = async ({ startDate, endDate } = {}) => {
 const getDailyRevenue = async ({ startDate, endDate }) => {
   const result = await pool.query(
     `SELECT
-       DATE(o.order_date)            AS date,
-       COUNT(*)                      AS total_orders,
+       DATE(o.order_date)               AS date,
+       COUNT(*)                         AS total_orders,
        COALESCE(SUM(o.total_amount), 0) AS revenue,
        COALESCE(SUM(o.platform_fee), 0) AS platform_fee,
        COALESCE(SUM(o.net_amount), 0)   AS net_amount
      FROM "Order" o
-     WHERE o.order_date BETWEEN $1 AND $2
+     WHERE o.order_date >= $1
+       AND o.order_date < ($2::date + INTERVAL '1 day')
        AND o.order_status != 'cancelled'
      GROUP BY DATE(o.order_date)
      ORDER BY DATE(o.order_date) ASC`,
@@ -46,16 +53,16 @@ const getDailyRevenue = async ({ startDate, endDate }) => {
 };
 
 //  3. ยอดขายรายเดือน (Revenue by Month)
-const getMonthlyRevenue = async ({ year }) => {
+const getMonthlyRevenue = async ({ year } = {}) => {
   const targetYear = year || new Date().getFullYear();
 
   const result = await pool.query(
     `SELECT
-       TO_CHAR(o.order_date, 'YYYY-MM')    AS month,
-       COUNT(*)                            AS total_orders,
-       COALESCE(SUM(o.total_amount), 0)    AS revenue,
-       COALESCE(SUM(o.platform_fee), 0)    AS platform_fee,
-       COALESCE(SUM(o.net_amount), 0)      AS net_amount
+       TO_CHAR(o.order_date, 'YYYY-MM') AS month,
+       COUNT(*)                         AS total_orders,
+       COALESCE(SUM(o.total_amount), 0) AS revenue,
+       COALESCE(SUM(o.platform_fee), 0) AS platform_fee,
+       COALESCE(SUM(o.net_amount), 0)   AS net_amount
      FROM "Order" o
      WHERE EXTRACT(YEAR FROM o.order_date) = $1
        AND o.order_status != 'cancelled'
@@ -67,28 +74,27 @@ const getMonthlyRevenue = async ({ year }) => {
   return result.rows;
 };
 
-//  4. สินค้าขายดี Top N (Best Selling Products)
+//  4. สินค้าขายดี Top N
 const getTopProducts = async ({ limit = 10, startDate, endDate } = {}) => {
-  const dateFilter =
-    startDate && endDate
-      ? `AND o.order_date BETWEEN $2 AND $3`
-      : "";
-  const params =
-    startDate && endDate ? [limit, startDate, endDate] : [limit];
+  const hasDate = startDate && endDate;
+  const dateFilter = hasDate
+    ? `AND o.order_date >= $2 AND o.order_date < ($3::date + INTERVAL '1 day')`
+    : "";
+  const params = hasDate ? [limit, startDate, endDate] : [limit];
 
   const result = await pool.query(
     `SELECT
        p.product_id,
        p.product_name,
        s.shop_name,
-       gc.category_name                       AS global_category,
+       gc.category_name                        AS global_category,
        SUM(oi.quantity)                        AS total_quantity_sold,
        SUM(oi.quantity * oi.price_at_purchase) AS total_revenue
      FROM Order_Item oi
-     JOIN "Order" o   ON oi.order_id   = o.order_id
-     JOIN Product p   ON oi.product_id = p.product_id
-     JOIN Shop s      ON p.shop_id     = s.shop_id
-     JOIN Local_Category lc  ON p.local_cat_id  = lc.local_cat_id
+     JOIN "Order" o          ON oi.order_id    = o.order_id
+     JOIN Product p          ON oi.product_id  = p.product_id
+     JOIN Shop s             ON p.shop_id      = s.shop_id
+     JOIN Local_Category lc  ON p.local_cat_id = lc.local_cat_id
      JOIN Global_Category gc ON lc.global_cat_id = gc.global_cat_id
      WHERE o.order_status != 'cancelled' ${dateFilter}
      GROUP BY p.product_id, p.product_name, s.shop_name, gc.category_name
@@ -100,24 +106,23 @@ const getTopProducts = async ({ limit = 10, startDate, endDate } = {}) => {
   return result.rows;
 };
 
-//  5. สรุปรายได้แยกตามร้านค้า (Revenue by Shop)
+//  5. รายได้แยกตามร้านค้า
 const getRevenueByShop = async ({ startDate, endDate, limit = 20 } = {}) => {
-  const dateFilter =
-    startDate && endDate
-      ? `AND o.order_date BETWEEN $2 AND $3`
-      : "";
-  const params =
-    startDate && endDate ? [limit, startDate, endDate] : [limit];
+  const hasDate = startDate && endDate;
+  const dateFilter = hasDate
+    ? `AND o.order_date >= $2 AND o.order_date < ($3::date + INTERVAL '1 day')`
+    : "";
+  const params = hasDate ? [limit, startDate, endDate] : [limit];
 
   const result = await pool.query(
     `SELECT
        s.shop_id,
        s.shop_name,
-       s.status                              AS shop_status,
-       COUNT(DISTINCT o.order_id)            AS total_orders,
-       COALESCE(SUM(o.total_amount), 0)      AS total_revenue,
-       COALESCE(SUM(o.platform_fee), 0)      AS total_platform_fee,
-       COALESCE(SUM(o.net_amount), 0)        AS total_net_amount
+       s.status                         AS shop_status,
+       COUNT(DISTINCT o.order_id)       AS total_orders,
+       COALESCE(SUM(o.total_amount), 0) AS total_revenue,
+       COALESCE(SUM(o.platform_fee), 0) AS total_platform_fee,
+       COALESCE(SUM(o.net_amount), 0)   AS total_net_amount
      FROM Shop s
      LEFT JOIN "Order" o ON s.shop_id = o.shop_id
        AND o.order_status != 'cancelled' ${dateFilter}
@@ -130,9 +135,7 @@ const getRevenueByShop = async ({ startDate, endDate, limit = 20 } = {}) => {
   return result.rows;
 };
 
-
-//  6. สรุป Payout ทั้งหมด (Payout Overview)
-
+//  6. สรุป Payout ทั้งหมด
 const getPayoutSummary = async ({ status, startDate, endDate } = {}) => {
   const conditions = [];
   const params = [];
@@ -143,7 +146,9 @@ const getPayoutSummary = async ({ status, startDate, endDate } = {}) => {
     params.push(status);
   }
   if (startDate && endDate) {
-    conditions.push(`sp.payout_date BETWEEN $${idx} AND $${idx + 1}`);
+    conditions.push(
+      `sp.payout_date >= $${idx} AND sp.payout_date < ($${idx + 1}::date + INTERVAL '1 day')`
+    );
     params.push(startDate, endDate);
     idx += 2;
   }
@@ -170,26 +175,23 @@ const getPayoutSummary = async ({ status, startDate, endDate } = {}) => {
   return result.rows;
 };
 
-
-//  7. Payout สรุปยอดรวม (Payout Stats)
-
+//  7. Payout สรุปยอดรวม
 const getPayoutStats = async () => {
   const result = await pool.query(
     `SELECT
-       COUNT(*)                                              AS total_payouts,
-       COALESCE(SUM(net_amount), 0)                         AS total_amount,
-       COALESCE(SUM(net_amount) FILTER (WHERE status = 'pending'), 0)   AS pending_amount,
-       COUNT(*) FILTER (WHERE status = 'pending')           AS pending_count,
-       COALESCE(SUM(net_amount) FILTER (WHERE status = 'completed'), 0) AS completed_amount,
-       COUNT(*) FILTER (WHERE status = 'completed')         AS completed_count
+       COUNT(*)                                                              AS total_payouts,
+       COALESCE(SUM(net_amount), 0)                                         AS total_amount,
+       COALESCE(SUM(net_amount) FILTER (WHERE status = 'pending'),   0)     AS pending_amount,
+       COUNT(*)            FILTER (WHERE status = 'pending')                AS pending_count,
+       COALESCE(SUM(net_amount) FILTER (WHERE status = 'completed'), 0)     AS completed_amount,
+       COUNT(*)            FILTER (WHERE status = 'completed')              AS completed_count
      FROM Shop_Payout`
   );
 
   return result.rows[0];
 };
 
-
-//  8. Payout รายร้าน (Payout by Shop)
+//  8. Payout รายร้าน
 const getPayoutByShop = async ({ shopId } = {}) => {
   const whereClause = shopId ? `WHERE sp.shop_id = $1` : "";
   const params = shopId ? [shopId] : [];
@@ -198,10 +200,10 @@ const getPayoutByShop = async ({ shopId } = {}) => {
     `SELECT
        s.shop_id,
        s.shop_name,
-       COUNT(sp.payout_id)                                        AS total_payouts,
-       COALESCE(SUM(sp.net_amount), 0)                            AS total_payout_amount,
-       COALESCE(SUM(sp.net_amount) FILTER (WHERE sp.status = 'pending'), 0)   AS pending_amount,
-       COALESCE(SUM(sp.net_amount) FILTER (WHERE sp.status = 'completed'), 0) AS completed_amount
+       COUNT(sp.payout_id)                                                        AS total_payouts,
+       COALESCE(SUM(sp.net_amount), 0)                                            AS total_payout_amount,
+       COALESCE(SUM(sp.net_amount) FILTER (WHERE sp.status = 'pending'),   0)     AS pending_amount,
+       COALESCE(SUM(sp.net_amount) FILTER (WHERE sp.status = 'completed'), 0)     AS completed_amount
      FROM Shop_Payout sp
      JOIN Shop s ON sp.shop_id = s.shop_id
      ${whereClause}
@@ -213,13 +215,13 @@ const getPayoutByShop = async ({ shopId } = {}) => {
   return result.rows;
 };
 
-//  9. สรุปตามหมวดหมู่ (Revenue by Category)
+//  9. รายได้แยกตามหมวดหมู่
 const getRevenueByCategory = async ({ startDate, endDate } = {}) => {
-  const dateFilter =
-    startDate && endDate
-      ? `AND o.order_date BETWEEN $1 AND $2`
-      : "";
-  const params = startDate && endDate ? [startDate, endDate] : [];
+  const hasDate = startDate && endDate;
+  const dateFilter = hasDate
+    ? `AND o.order_date >= $1 AND o.order_date < ($2::date + INTERVAL '1 day')`
+    : "";
+  const params = hasDate ? [startDate, endDate] : [];
 
   const result = await pool.query(
     `SELECT
@@ -241,15 +243,13 @@ const getRevenueByCategory = async ({ startDate, endDate } = {}) => {
   return result.rows;
 };
 
-
-//  10. สรุปสถานะ Order (Order Status Breakdown)
-
+//  10. สรุปสถานะ Order
 const getOrderStatusBreakdown = async ({ startDate, endDate } = {}) => {
-  const dateFilter =
-    startDate && endDate
-      ? `WHERE order_date BETWEEN $1 AND $2`
-      : "";
-  const params = startDate && endDate ? [startDate, endDate] : [];
+  const hasDate = startDate && endDate;
+  const dateFilter = hasDate
+    ? `WHERE order_date >= $1 AND order_date < ($2::date + INTERVAL '1 day')`
+    : "";
+  const params = hasDate ? [startDate, endDate] : [];
 
   const result = await pool.query(
     `SELECT
