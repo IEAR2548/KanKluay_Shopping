@@ -1,11 +1,9 @@
-import type { Metadata } from "next";
-import "@/app/globals.css";
-
-import UserNavbar from "@/components/layout/UserNavbar";
+import type { Metadata } from 'next';
+import '@/app/globals.css';
 
 export const metadata: Metadata = {
-  title: "KanKluay Shopping",
-  description: "E-Commerce platform for shopping",
+  title: 'KanKluay Shopping',
+  description: 'E-Commerce platform for shopping',
 };
 
 export default function RootLayout({
