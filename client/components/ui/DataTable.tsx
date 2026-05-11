@@ -27,12 +27,14 @@ export function DataTable<T extends Record<string, any>>({
   data,
   pageSize = 5,
   searchable = true,
-  searchPlaceholder = "Search Shop",
+  searchPlaceholder = "Search",
   onEdit,
   onDelete,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+
+  const showActionCol = Boolean(onEdit || onDelete);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return data;
@@ -98,12 +100,11 @@ export function DataTable<T extends Record<string, any>>({
                   background: "transparent",
                   outline: "none",
                   fontSize: 13,
-                  width: 140,
+                  width: 160,
                   color: "#333",
                 }}
               />
             </div>
-            {/* Icon buttons */}
             {["⚡", "↕", "⋯"].map((icon, i) => (
               <button
                 key={i}
@@ -129,20 +130,12 @@ export function DataTable<T extends Record<string, any>>({
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
           <thead>
             <tr style={{ background: "#fef9e7" }}>
-              <th
-                style={{
-                  padding: "12px 24px",
-                  textAlign: "left",
-                  fontWeight: 700,
-                  color: "#555",
-                  fontSize: 13,
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <th style={{ padding: "12px 24px", textAlign: "left", fontWeight: 700, color: "#555", fontSize: 13 }}>
                 No.
               </th>
               {columns.map((col, colIdx) => (
-                <th key={`col-${String(col.key)}-${colIdx}`}
+                <th
+                  key={`th-${String(col.key)}-${colIdx}`}
                   style={{
                     padding: "12px 16px",
                     textAlign: col.align || "left",
@@ -155,16 +148,9 @@ export function DataTable<T extends Record<string, any>>({
                   {col.label}
                 </th>
               ))}
-              {(onEdit || onDelete) && (
-                <th
-                  style={{
-                    padding: "12px 24px",
-                    textAlign: "center",
-                    fontWeight: 700,
-                    color: "#555",
-                    fontSize: 13,
-                  }}
-                >
+              {/* Action column — แสดงเฉพาะตอนมี handler */}
+              {showActionCol && (
+                <th style={{ padding: "12px 24px", textAlign: "center", fontWeight: 700, color: "#555", fontSize: 13 }}>
                   Action
                 </th>
               )}
@@ -174,7 +160,7 @@ export function DataTable<T extends Record<string, any>>({
             {paged.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + 2}
+                  colSpan={columns.length + (showActionCol ? 2 : 1)}
                   style={{ textAlign: "center", padding: 32, color: "#aaa" }}
                 >
                   No data found
@@ -184,10 +170,7 @@ export function DataTable<T extends Record<string, any>>({
               paged.map((row, idx) => (
                 <tr
                   key={idx}
-                  style={{
-                    borderBottom: "1px solid #f0f0f0",
-                    transition: "background 0.1s",
-                  }}
+                  style={{ borderBottom: "1px solid #f0f0f0", transition: "background 0.1s" }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "#fafafa")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                 >
@@ -195,32 +178,24 @@ export function DataTable<T extends Record<string, any>>({
                     {(page - 1) * pageSize + idx + 1}
                   </td>
                   {columns.map((col, colIdx) => (
-                    <td key={`cell-${String(col.key)}-${colIdx}`}
+                    <td
+                      key={`td-${String(col.key)}-${colIdx}`}
                       style={{
                         padding: "14px 16px",
                         color: "#222",
                         textAlign: col.align || "left",
                       }}
                     >
-                      {col.render
-                        ? col.render(row)
-                        : String(row[col.key as string] ?? "-")}
+                      {col.render ? col.render(row) : String(row[col.key as string] ?? "-")}
                     </td>
                   ))}
-                  {(onEdit || onDelete) && (
+                  {showActionCol && (
                     <td style={{ padding: "14px 24px", textAlign: "center" }}>
                       <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                         {onEdit && (
                           <button
                             onClick={() => onEdit(row)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: 16,
-                              color: "#888",
-                              padding: 2,
-                            }}
+                            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#888", padding: 2 }}
                             title="Edit"
                           >
                             ✏️
@@ -229,14 +204,7 @@ export function DataTable<T extends Record<string, any>>({
                         {onDelete && (
                           <button
                             onClick={() => onDelete(row)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: 16,
-                              color: "#888",
-                              padding: 2,
-                            }}
+                            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#888", padding: 2 }}
                             title="Delete"
                           >
                             🗑️
@@ -267,15 +235,10 @@ export function DataTable<T extends Record<string, any>>({
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              background: "none",
-              border: "none",
+              background: "none", border: "none",
               cursor: page === 1 ? "not-allowed" : "pointer",
               color: page === 1 ? "#ccc" : "#555",
-              fontWeight: 600,
-              fontSize: 13,
+              fontWeight: 600, fontSize: 13,
             }}
           >
             ← Previous
@@ -284,23 +247,17 @@ export function DataTable<T extends Record<string, any>>({
           <div style={{ display: "flex", gap: 4 }}>
             {pageNumbers.map((n, i) =>
               n === "..." ? (
-                <span key={i} style={{ padding: "4px 8px", color: "#aaa" }}>
-                  ...
-                </span>
+                <span key={i} style={{ padding: "4px 8px", color: "#aaa" }}>...</span>
               ) : (
                 <button
                   key={i}
                   onClick={() => setPage(n as number)}
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    border: "none",
+                    width: 32, height: 32, borderRadius: 8, border: "none",
                     background: page === n ? "#f5c518" : "transparent",
                     color: page === n ? "#111" : "#555",
                     fontWeight: page === n ? 700 : 400,
-                    cursor: "pointer",
-                    fontSize: 13,
+                    cursor: "pointer", fontSize: 13,
                   }}
                 >
                   {n}
@@ -313,15 +270,10 @@ export function DataTable<T extends Record<string, any>>({
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              background: "none",
-              border: "none",
+              background: "none", border: "none",
               cursor: page === totalPages ? "not-allowed" : "pointer",
               color: page === totalPages ? "#ccc" : "#555",
-              fontWeight: 600,
-              fontSize: 13,
+              fontWeight: 600, fontSize: 13,
             }}
           >
             Next →
