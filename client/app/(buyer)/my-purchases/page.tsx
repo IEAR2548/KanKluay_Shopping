@@ -61,7 +61,6 @@ export default function MyPurchasePage() {
 
   return (
     <div style={styles.page}>
-        <AdminNavbar />
 
       {/* ─── Main layout ─── */}
       <div style={styles.layout}>

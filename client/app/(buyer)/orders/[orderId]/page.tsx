@@ -80,7 +80,7 @@ export default function OrderTrackingPage() {
 
   return (
     <div style={styles.page}>
-      {/* ─── Top bar ─── */}
+      {/* ─── Top bar ───
       <div style={styles.topBar}>
         <span>Seller Centre</span>
         <div style={styles.topBarRight}>
@@ -88,9 +88,9 @@ export default function OrderTrackingPage() {
           <div style={styles.avatar}>S</div>
           <span style={{ fontWeight: 600 }}>Sun2549</span>
         </div>
-      </div>
+      </div> */}
 
-      {/* ─── Navbar ─── */}
+      {/* ─── Navbar ───
       <div style={styles.navbar}>
         <div style={styles.brand}>
           <div style={styles.logo}>🍌</div>
@@ -102,10 +102,10 @@ export default function OrderTrackingPage() {
         <input style={styles.search} placeholder="Search for products and stores" />
         <button style={styles.searchBtn}>🔍</button>
         <div style={styles.cartIcon}>🛒<span style={styles.cartBadge}>15</span></div>
-      </div>
+      </div> */}
 
       <div style={styles.layout}>
-        {/* ─── Sidebar ─── */}
+        {/* ─── Sidebar ───
         <div style={styles.sidebar}>
           <div style={styles.profile}>
             <div style={styles.profileAvatar}>S</div>
@@ -119,7 +119,7 @@ export default function OrderTrackingPage() {
             <div style={{ ...styles.menuItem, ...styles.menuItemActive }}>📋 My Purchases</div>
             <div style={styles.menuItem}>🔔 Notification</div>
           </div>
-        </div>
+        </div> */}
 
         {/* ─── Main content ─── */}
         <div style={styles.content}>

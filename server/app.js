@@ -26,6 +26,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 const userRoutes = require("./routes/userRoutes");
 const orderRoutes = require("./routes/orderRoutes");
@@ -43,10 +44,8 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/users", userRoutes);
 app.use("/orders", orderRoutes);
 
-
-app.use('/uploads', express.static('public/uploads')); // serve รูป
-app.use('/upload', uploadRoutes);   
-
+app.use("/uploads", express.static("public/uploads")); // serve รูป
+app.use("/upload", uploadRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

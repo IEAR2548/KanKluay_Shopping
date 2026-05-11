@@ -142,7 +142,6 @@ export default function CartPage() {
 
   return (
     <div style={styles.page}>
-      <AdminNavbar />
 
       <div style={styles.container}>
         {/* ─── Column header ─── */}
