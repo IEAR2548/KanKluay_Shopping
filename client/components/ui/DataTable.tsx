@@ -195,7 +195,7 @@ export function DataTable<T extends Record<string, any>>({
                     {(page - 1) * pageSize + idx + 1}
                   </td>
                   {columns.map((col, colIdx) => (
-                    <td key={`cell-${String(col.key)}-${colIdx}`}
+                  <td key={`cell-${String(col.key)}-${colIdx}`}
                       style={{
                         padding: "14px 16px",
                         color: "#222",

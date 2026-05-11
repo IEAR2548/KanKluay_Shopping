@@ -238,7 +238,7 @@ export default function ReportsPage() {
                 data={shopData}
                 pageSize={5}
                 searchable
-                searchPlaceholder="Search Shop"
+                searchPlaceholder="Search Shop Name"
                 onEdit={(row) => console.log("edit", row)}
                 onDelete={(row) => console.log("delete", row)}
               />
