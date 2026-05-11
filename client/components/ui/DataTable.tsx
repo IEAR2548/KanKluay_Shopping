@@ -141,9 +141,8 @@ export function DataTable<T extends Record<string, any>>({
               >
                 No.
               </th>
-              {columns.map((col) => (
-                <th
-                  key={String(col.key)}
+              {columns.map((col, colIdx) => (
+                <th key={`col-${String(col.key)}-${colIdx}`}
                   style={{
                     padding: "12px 16px",
                     textAlign: col.align || "left",
@@ -195,9 +194,8 @@ export function DataTable<T extends Record<string, any>>({
                   <td style={{ padding: "14px 24px", color: "#555" }}>
                     {(page - 1) * pageSize + idx + 1}
                   </td>
-                  {columns.map((col) => (
-                    <td
-                      key={String(col.key)}
+                  {columns.map((col, colIdx) => (
+                    <td key={`cell-${String(col.key)}-${colIdx}`}
                       style={{
                         padding: "14px 16px",
                         color: "#222",

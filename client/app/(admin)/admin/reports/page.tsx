@@ -59,7 +59,6 @@ const shopRevenueColumns: Column<ShopRevenue>[] = [
   { key: "shop_id", label: "ShopId", render: (r) => `SID${r.shop_id}` },
   { key: "shop_name", label: "Shop Name" },
   { key: "total_orders", label: "Transactions", align: "center" },
-  { key: "total_orders", label: "Total Order", align: "center" },
   { key: "total_revenue", label: "Total Sales", align: "right", render: (r) => formatK(r.total_revenue) },
 ];
 

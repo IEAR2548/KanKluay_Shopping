@@ -140,7 +140,7 @@ export function RevenueChart({
       </div>
 
       {/* Chart */}
-      <div style={{ width: "100%", height: 260 }}>
+      <div style={{ width: "100%", height: 260, minWidth: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
           {chartMode === "line" ? (
             <AreaChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
