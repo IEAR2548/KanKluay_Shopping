@@ -291,12 +291,6 @@ export default function ShopManagementPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-[#FEF3C7] text-gray-800 font-medium">
-                <th className="py-3 px-4 w-12 text-center">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 w-4 h-4"
-                  />
-                </th>
                 <th className="py-3 px-4 w-16">No.</th>
                 <th className="py-3 px-4">ShopId</th>
                 <th className="py-3 px-4">Shop Name</th>
@@ -309,13 +303,13 @@ export default function ShopManagementPage() {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-gray-500">
+                  <td colSpan={7} className="py-8 text-center text-gray-500">
                     Loading shops...
                   </td>
                 </tr>
               ) : paginatedShops.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-gray-500">
+                  <td colSpan={7} className="py-8 text-center text-gray-500">
                     No shops found.
                   </td>
                 </tr>
@@ -325,12 +319,6 @@ export default function ShopManagementPage() {
                     key={shop.shop_id}
                     className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="py-4 px-4 text-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 w-4 h-4"
-                      />
-                    </td>
                     <td className="py-4 px-4 text-gray-600">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>

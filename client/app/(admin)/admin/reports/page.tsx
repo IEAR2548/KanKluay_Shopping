@@ -170,14 +170,14 @@ function DetailsModal({ title, summary, onClose }: DetailsModalProps) {
 // ─── Column definitions (ไม่มี edit/delete) ──────────────────
 
 const shopRevenueColumns: Column<ShopRevenue>[] = [
-  { key: "shop_id", label: "ShopId", render: (r) => `SID${r.shop_id}` },
+  { key: "shop_id", label: "ShopId" },
   { key: "shop_name", label: "Shop Name" },
   { key: "total_orders", label: "Transactions", align: "center" },
   { key: "total_revenue", label: "Total Sales", align: "right", render: (r) => formatK(r.total_revenue) },
 ];
 
 const shopReturnColumns: Column<ShopRevenue>[] = [
-  { key: "shop_id", label: "ShopId", render: (r) => `SID${r.shop_id}` },
+  { key: "shop_id", label: "ShopId" },
   { key: "shop_name", label: "Shop Name" },
   { key: "total_orders", label: "Completed Order", align: "center" },
   {
@@ -205,20 +205,44 @@ export default function ReportsPage() {
   const [activeMetric, setActiveMetric] = useState<ActiveMetric>("revenue");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
+  const [prevSummary, setPrevSummary] = useState<SummaryData | null>(null);
+
+  // ── Compute previous date range (same window, shifted back) ──
+  function getPrevDateRange(range: TimeRange): { startDate: string; endDate: string } {
+    const now = new Date();
+    const days = range === "lastWeek" ? 7 : range === "lastMonth" ? 30 : range === "lastQuarter" ? 90 : 365;
+    const prevEnd = new Date(now);
+    prevEnd.setDate(now.getDate() - days);
+    const prevStart = new Date(prevEnd);
+    prevStart.setDate(prevEnd.getDate() - days);
+    return {
+      startDate: prevStart.toISOString().split("T")[0],
+      endDate: prevEnd.toISOString().split("T")[0],
+    };
+  }
+
+  function calcChange(curr: string | undefined, prev: string | undefined): number {
+    const c = Number(curr ?? 0);
+    const p = Number(prev ?? 0);
+    if (p === 0) return 0;
+    return Math.round(((c - p) / p) * 1000) / 10;
+  }
 
   const loadData = useCallback(
     async (range: TimeRange) => {
       try {
         setLoading(true);
         const { startDate, endDate } = getDateRange(range);
-        const [sum, daily, shops] = await Promise.all([
+        const [sum, daily, shops, prevSum] = await Promise.all([
           fetchSummary(),
           fetchDailyRevenue({ startDate, endDate }),
           fetchRevenueByShop({ startDate, endDate }),
+          fetchSummary(getPrevDateRange(range)),
         ]);
         setSummary(sum);
         setChartData(toChartData(daily, activeMetric));
         setShopData(shops);
+        setPrevSummary(prevSum);
       } catch (err) {
         console.error("Failed to load report data:", err);
       } finally {
@@ -245,10 +269,10 @@ export default function ReportsPage() {
     setModalOpen(true);
   };
 
-  const statCards: { title: string; metric: ActiveMetric; valueKey: keyof SummaryData }[] = [
-    { title: "Total Sales", metric: "revenue", valueKey: "total_revenue" },
-    { title: "Total Fees", metric: "platform_fee", valueKey: "total_platform_fee" },
-    { title: "Net Revenue", metric: "net_amount", valueKey: "total_net_amount" },
+  const statCards: { title: string; metric: ActiveMetric; valueKey: keyof SummaryData; prevKey: keyof SummaryData }[] = [
+    { title: "Total Sales",   metric: "revenue",      valueKey: "total_revenue",       prevKey: "total_revenue" },
+    { title: "Total Fees",    metric: "platform_fee", valueKey: "total_platform_fee",  prevKey: "total_platform_fee" },
+    { title: "Net Revenue",   metric: "net_amount",   valueKey: "total_net_amount",    prevKey: "total_net_amount" },
   ];
 
   return (
@@ -282,8 +306,8 @@ export default function ReportsPage() {
             <StatCard
               title={card.title}
               value={loading ? "…" : formatK(summary?.[card.valueKey] ?? 0)}
-              change={10.4}
-              previousLabel="(+ 235)"
+              change={calcChange(summary?.[card.valueKey], prevSummary?.[card.prevKey])}
+              previousLabel={`prev: ${formatK(prevSummary?.[card.prevKey] ?? 0)}`}
               onDetails={() => handleDetails(card.title)}
             />
           </div>
@@ -317,8 +341,8 @@ export default function ReportsPage() {
       <div style={{ marginTop: 32 }}>
         <TabSwitcher
           tabs={[
-            { label: "Top Performer By Categories", key: "top", badge: `${shopData.length}.5k` },
-            { label: "Shop Returns Analytics", key: "returns", badge: `${shopData.length}.5k` },
+            { label: "Top Performer By Categories", key: "top", badge: `${shopData.length}` },
+            { label: "Shop Returns Analytics", key: "returns", badge: `${shopData.length}` },
           ]}
           defaultTab="top"
         >

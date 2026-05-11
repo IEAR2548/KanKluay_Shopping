@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import UserNavbar from "@/components/layout/UserNavbar";
 import ProfileSidebar from "@/components/layout/ProfileSidebar";
@@ -184,67 +184,12 @@ function OrderCard({ order }: { order: Order }) {
 }
 
 // ─── Styles ──────────────────────────────────────────────────
-const styles: Record<string, React.CSSProperties> = {
+const styles: Record<string, CSSProperties> = {
   page: { fontFamily: "Sarabun, sans-serif", background: "#f5f5f5", minHeight: "100vh" },
-  topBar: {
-    background: "#f5a623", color: "#000", fontSize: 13,
-    padding: "6px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
-  },
-  topBarRight: { display: "flex", alignItems: "center", gap: 12 },
-  avatar: {
-    width: 28, height: 28, borderRadius: "50%", background: "#fff",
-    display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700,
-  },
-  navbar: {
-    background: "#f5a623", padding: "10px 24px",
-    display: "flex", alignItems: "center", gap: 12,
-  },
-  brand: { display: "flex", alignItems: "center", gap: 8, marginRight: 12 },
-  logo: { fontSize: 36 },
-  brandName: { fontWeight: 800, fontSize: 16, lineHeight: 1.1 },
-  brandSub: { fontSize: 11, color: "#7b4f00" },
-  search: {
-    flex: 1, border: "none", borderRadius: 4,
-    padding: "10px 16px", fontSize: 14, outline: "none",
-  },
-  searchBtn: {
-    background: "#e69500", border: "none", borderRadius: 4,
-    padding: "10px 16px", cursor: "pointer", fontSize: 16,
-  },
-  cartIcon: { position: "relative", fontSize: 24, cursor: "pointer" },
-  cartBadge: {
-    position: "absolute", top: -6, right: -8,
-    background: "#e53e3e", color: "#fff", borderRadius: "50%",
-    fontSize: 10, width: 18, height: 18,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontWeight: 700,
-  },
   layout: {
     maxWidth: 1100, margin: "24px auto", padding: "0 16px",
     display: "flex", gap: 16, alignItems: "flex-start",
   },
-  sidebar: {
-    width: 200, background: "#fff", borderRadius: 4,
-    padding: "20px 0", flexShrink: 0,
-  },
-  profile: {
-    display: "flex", alignItems: "center", gap: 10,
-    padding: "0 16px 16px", borderBottom: "1px solid #f0f0f0",
-  },
-  profileAvatar: {
-    width: 44, height: 44, borderRadius: "50%",
-    background: "#555", color: "#fff",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 18, fontWeight: 700, flexShrink: 0,
-  },
-  profileName: { fontWeight: 700, fontSize: 14 },
-  profileEdit: { fontSize: 11, color: "#888", cursor: "pointer", marginTop: 2 },
-  menu: { padding: "12px 0" },
-  menuItem: {
-    display: "flex", alignItems: "center", gap: 10,
-    padding: "10px 20px", fontSize: 14, cursor: "pointer", color: "#333",
-  },
-  menuItemActive: { color: "#f5a623", fontWeight: 600 },
   content: { flex: 1 },
   empty: { background: "#fff", padding: 40, textAlign: "center", color: "#888", borderRadius: 4 },
   orderCard: {

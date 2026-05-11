@@ -177,9 +177,6 @@ export default function UserManagementPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-[#FEF3C7] text-gray-800 font-medium">
-                <th className="py-3 px-4 w-12 text-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 w-4 h-4" />
-                </th>
                 <th className="py-3 px-4 w-16">No.</th>
                 <th className="py-3 px-4">UserId</th>
                 <th className="py-3 px-4">User Name</th>
@@ -191,14 +188,11 @@ export default function UserManagementPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr><td colSpan={8} className="py-8 text-center text-gray-500">Loading users...</td></tr>
+                <tr><td colSpan={7} className="py-8 text-center text-gray-500">Loading users...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="py-8 text-center text-gray-500">No users found.</td></tr>
+                <tr><td colSpan={7} className="py-8 text-center text-gray-500">No users found.</td></tr>
               ) : filtered.map((u, index) => (
                 <tr key={u.user_id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-4 text-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 w-4 h-4" />
-                  </td>
                   <td className="py-4 px-4 text-gray-600">{index + 1}</td>
                   <td className="py-4 px-4 text-gray-500 font-mono text-xs">UID{String(u.user_id).padStart(6, '0')}</td>
                   <td className="py-4 px-4 text-gray-800 font-medium">{u.firstname} {u.lastname}</td>
